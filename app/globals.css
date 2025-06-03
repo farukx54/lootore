@@ -2,88 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-  --background: 0 0% 100%;
-  --foreground: 0 0% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 3.9%;
-  --primary: 0 0% 9%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 0 0% 96.1%;
-  --secondary-foreground: 0 0% 9%;
-  --muted: 0 0% 96.1%;
-  --muted-foreground: 0 0% 45.1%;
-  --accent: 0 0% 96.1%;
-  --accent-foreground: 0 0% 9%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 89.8%;
-  --input: 0 0% 89.8%;
-  --ring: 0 0% 3.9%;
-  --chart-1: 12 76% 61%;
-  --chart-2: 173 58% 39%;
-  --chart-3: 197 37% 24%;
-  --chart-4: 43 74% 66%;
-  --chart-5: 27 87% 67%;
-  --radius: 0.5rem;
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 240 5.9% 10%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-ring: 217.2 91.2% 59.8%;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
@@ -92,8 +71,868 @@
     @apply border-border;
   }
   body {
-    color: rgb(var(--foreground-rgb));
-    background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .animate-gradient-text {
+    background-size: 200% auto;
+    animation: gradient-shift 3s ease infinite;
+  }
+
+  @keyframes gradient-shift {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+}
+
+@layer utilities {
+  @media (min-width: 480px) {
+    .xs\:inline-block {
+      display: inline-block;
+    }
+    .xs\:text-xs {
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .break-words-all {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  .overflow-x-clip {
+    overflow-x: clip;
+  }
+}
+
+/* Ensure all containers respect max width */
+.container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Ensure all images are responsive */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Ensure all text elements don't overflow */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+button {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  hyphens: auto;
+}
+
+/* Ensure all flex containers don't overflow */
+.flex,
+.flex-row,
+.flex-col {
+  min-width: 0;
+}
+
+/* Ensure all grid items don't overflow */
+.grid > * {
+  min-width: 0;
+}
+
+/* Fix for Twitch and Kick buttons */
+button svg {
+  pointer-events: none;
+}
+
+button span {
+  user-select: none;
+}
+
+/* Consistent hover effects for buttons */
+.btn-hover-effect {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-hover-effect:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Twitch integration styles */
+.twitch-connected {
+  position: relative;
+}
+
+.twitch-connected::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00ff00;
+  bottom: -2px;
+  right: -2px;
+  border: 1px solid #1f2937;
+}
+
+/* Add these styles to the end of the file to support the fixed tab layout */
+/* Fixed tab layout styles */
+.fixed-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+}
+
+.fixed-tabs > * {
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Margin-based indentation */
+.indented-content {
+  margin-left: 0.5rem;
+  margin-right: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .indented-content {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .indented-content {
+    margin-left: 1.5rem;
+    margin-right: 1.5rem;
+  }
+}
+
+/* Fixed width containers */
+.fixed-width-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  overflow-x: hidden;
+}
+
+/* Tab content container */
+.tab-content-container {
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Add these utility classes to the end of the file to help with overflow control */
+
+/* Additional overflow control utilities */
+.overflow-x-auto-with-padding {
+  overflow-x: auto;
+  padding-bottom: 0.5rem; /* Prevents scrollbar from cutting off content */
+}
+
+.max-w-content {
+  max-width: 100%;
+  width: max-content;
+}
+
+.break-all-words {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* Ensure all sections have proper overflow control */
+section {
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Ensure all containers have proper width constraints */
+.container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure all grid and flex layouts have proper width constraints */
+.grid,
+.flex {
+  max-width: 100%;
+}
+
+/* Ensure all cards have proper width constraints */
+.card {
+  max-width: 100%;
+}
+
+/* Ensure all images have proper responsive constraints */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Fix for absolute positioned elements */
+.absolute {
+  max-width: 100vw;
+}
+
+/* Ensure text wrapping */
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+span,
+a {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* Add these specific rules to the end of your globals.css file */
+
+/* Specific fixes for the How to Earn Points section */
+.card {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.card-header,
+.card-content {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.break-words {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
+}
+
+/* Ensure grid items don't overflow */
+.grid {
+  width: 100%;
+  max-width: 100%;
+}
+
+.grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Ensure containers properly constrain content */
+.container {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure sections don't allow horizontal overflow */
+section {
+  max-width: 100vw;
+}
+
+/* Ensure all flex containers don't overflow */
+.flex {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Add these specific rules to the end of your globals.css file */
+
+/* Specific fixes for the Rewards Catalog hero section */
+.rewards-hero-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.rewards-hero-section > .absolute {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Specific fixes for the Earn Points hero section */
+.earn-points-hero-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.earn-points-hero-section > .absolute {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Ensure content sections don't inherit the overflow hidden property */
+.earn-points-content-section {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/* Specific fix for digital-weave.png background */ \
+.earn-points-hero-section .bg-\[url('/digital-weave.png')\] {
+  background-size: cover;
+  background-position: center;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* Ensure other sections don't inherit the overflow hidden property */
+section:not(.rewards-hero-section):not(.earn-points-hero-section) {
+  overflow-x: hidden;
+  overflow-y: visible;
+}
+
+/* Ensure ResponsiveContainer doesn't cause overflow */
+.responsive-container-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Enhanced styling for the Rewards Redemption section */
+.rewards-redemption-section {
+  position: relative;
+  overflow: visible;
+}
+
+.rewards-redemption-section::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url("/digital-weave.png");
+  background-size: cover;
+  background-position: center;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+.rewards-redemption-section input {
+  width: 100%;
+  max-width: 100%;
+  transition: all 0.2s ease-in-out;
+}
+
+.rewards-redemption-section input:focus {
+  transform: translateY(-1px);
+}
+
+.rewards-redemption-section button {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  font-weight: 500;
+}
+
+.rewards-redemption-section button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rewards-redemption-section button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Ensure the redemption result message is properly displayed */
+.rewards-redemption-section .rounded-lg {
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  word-break: break-word;
+}
+
+/* Improve responsive behavior on small screens */
+@media (max-width: 480px) {
+  .rewards-redemption-section input {
+    padding-right: 90px;
+  }
+
+  .rewards-redemption-section button {
+    max-width: 80px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .rewards-redemption-section .font-mono {
+    display: inline-block;
+    margin-top: 4px;
+  }
+}
+
+/* Add animation for the loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Fix for homepage hero section vertical scrolling */
+/* This targets the specific hero section on the homepage */
+section.relative.overflow-hidden.bg-gradient-to-br.from-black.via-gray-900.to-black.py-20 {
+  overflow: hidden !important;
+  isolation: isolate;
+  contain: paint;
+}
+
+/* Ensure the decorative elements don't cause scrolling */
+section.relative.overflow-hidden.bg-gradient-to-br.from-black.via-gray-900.to-black.py-20 .absolute {
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Fix for all sections with decorative elements that might cause scrolling */
+section:has(.absolute) {
+  overflow: hidden !important;
+  isolation: isolate;
+}
+
+/* Ensure body doesn't have unwanted overflow */
+body {
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Fix for main element to prevent unwanted scrolling */
+main {
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Ensure container elements within sections are properly contained */
+section > .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Add these styles for the category selection section */
+.category-section {
+  background: linear-gradient(to bottom, rgba(17, 24, 39, 1), rgba(17, 24, 39, 0.95));
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(31, 41, 55, 0.8);
+}
+
+.category-button {
+  transition: all 0.2s ease-in-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-button:hover {
+  transform: translateY(-2px);
+}
+
+.category-button.active::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(145, 70, 255, 0.2), rgba(0, 255, 0, 0.2));
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.category-icon {
+  transition: all 0.2s ease-in-out;
+}
+
+.category-button:hover .category-icon {
+  transform: scale(1.1);
+}
+
+.category-button.active .category-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(145, 70, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(145, 70, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(145, 70, 255, 0);
+  }
+}
+
+/* Ensure the category section is responsive */
+@media (max-width: 640px) {
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+  }
+
+  .category-button {
+    padding: 0.5rem;
+  }
+
+  .category-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+/* Ensure the category section has proper z-index */
+.rewards-category-section {
+  position: relative;
+  z-index: 20;
+}
+
+/* Styles for the horizontal scrolling category list */
+.category-scroll-container {
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  padding-bottom: 0.5rem;
+}
+
+.category-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.category-list {
+  display: flex;
+  gap: 0.5rem;
+  min-width: max-content;
+  padding: 0.25rem 0;
+}
+
+/* Add these styles at the end of the file */
+
+/* Range Slider Styles */
+[data-radix-slider-thumb] {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure both handles are visible with proper styling */
+[data-radix-slider-thumb]:first-child,
+[data-radix-slider-thumb]:last-child {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Add hover effect to slider handles */
+[data-radix-slider-thumb]:hover {
+  background-color: #f0f0f0;
+  transform: scale(1.1);
+}
+
+/* Add focus styles for accessibility */
+[data-radix-slider-thumb]:focus-visible {
+  outline: 2px solid #9146ff;
+  outline-offset: 2px;
+}
+
+/* Ensure the slider track has proper z-index */
+[data-radix-slider-track] {
+  z-index: 0;
+}
+
+/* Ensure the slider range has proper z-index */
+[data-radix-slider-range] {
+  z-index: 1;
+}
+
+/* Ensure the slider thumbs have proper z-index */
+[data-radix-slider-thumb] {
+  z-index: 2;
+}
+
+/* 
+Add
+  these
+  styles
+  at
+  the
+  end
+  of
+  the
+  file
+  to
+  ensure
+  consistent
+  navbar
+  layout 
+*/
+/* Navbar layout consistency fixes */
+.navbar-container {
+  position: relative;
+  width: 100%;
+}
+
+.navbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 120px;
+}
+
+@media (min-width: 768px) {
+  .navbar-actions {
+    min-width: 180px;
+  }
+}
+
+/* Prevent text from shifting */
+.nav-link {
+  position: relative;
+  white-space: nowrap;
+}
+
+/* Ensure consistent button sizes */
+.auth-button,
+.user-dropdown {
+  min-width: 100px;
+  max-width: 180px;
+}
+
+/* Add these mobile-specific improvements to the end of the file */
+
+/* Improve touch targets for mobile */
+@media (max-width: 640px) {
+  button,
+  a,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Ensure proper spacing between interactive elements */
+  .button-group > * {
+    margin: 0.25rem;
+  }
+
+  /* Improve form elements */
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    padding: 0.75rem;
+  }
+}
+
+/* Ensure text is readable on small screens */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.75rem;
+    line-height: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    line-height: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+  }
+
+  p,
+  li,
+  span {
+    font-size: 0.9375rem;
+    line-height: 1.5rem;
+  }
+}
+
+/* Improve scrolling behavior */
+.scroll-container {
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scroll-behavior: smooth;
+}
+
+/* Fix for position: fixed elements on mobile */
+.fixed-element {
+  position: fixed;
+  width: 100%;
+  max-width: 100vw;
+  left: 0;
+  right: 0;
+}
+
+/* Prevent content from being hidden under fixed headers */
+.has-fixed-header {
+  padding-top: var(--header-height, 4rem);
+}
+
+/* Improve mobile modal experience */
+@media (max-width: 640px) {
+  [role="dialog"] {
+    padding: 1rem;
+  }
+
+  .dialog-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0.5rem !important;
+  }
+}
+
+/* Ensure proper spacing on small screens */
+@media (max-width: 480px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .section {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+}
+
+/* Add these accessibility improvements to the end of the file */
+
+/* Ensure proper touch target sizes for accessibility */
+@media (max-width: 640px) {
+  /* Minimum touch target size of 44x44px per WCAG guidelines */
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="button"],
+  select,
+  .interactive-element {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.5rem 1rem;
+  }
+
+  /* Ensure proper spacing between interactive elements */
+  .button-group > * {
+    margin: 0.25rem;
+  }
+
+  /* Improve form controls */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px; /* Prevents iOS zoom on focus */
+    padding: 0.75rem;
+    height: auto;
+    min-height: 44px;
+  }
+
+  /* Improve checkbox and radio button accessibility */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 24px;
+    height: 24px;
+    margin: 10px;
+    position: relative;
+  }
+
+  /* Improve focus states for keyboard navigation */
+  a:focus,
+  button:focus,
+  input:focus,
+  select:focus,
+  textarea:focus,
+  [tabindex]:focus {
+    outline: 3px solid #9146ff;
+    outline-offset: 2px;
+  }
+}
+
+/* Improve color contrast for text elements */
+.text-gray-400 {
+  color: #a0aec0; /* Improved contrast from default gray-400 */
+}
+
+/* Ensure proper text scaling */
+html {
+  font-size: 100%; /* Respect user's browser font size settings */
+}
+
+/* Support reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
