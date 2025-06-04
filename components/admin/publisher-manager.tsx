@@ -1,8 +1,9 @@
 "use client"
 
-import type React from "react"
+import { Badge } from "@/components/ui/badge"
 
-import { useState } from "react"
+import type React from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,197 +11,160 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Save, Plus, Trash2, Edit } from "lucide-react"
+import { Loader2, Save, Plus, Trash2, Edit, ImageIcon } from "lucide-react"
 import ImageUploader from "./image-uploader"
-import StreamCard from "../stream-card"
+import { useAdminStore } from "@/lib/stores/admin-store"
+import type { AdminPublisher } from "@/lib/types/admin"
 
-// Define publisher/streamer type
-interface Publisher {
-  id: string
-  name: string
-  platform: "twitch" | "kick"
-  image: string
-  viewerCount: number
-  pointMultiplier: number
-  streamUrl: string
-  isActive: boolean
-  isSubscribed?: boolean
+const INITIAL_PUBLISHER_STATE: Omit<AdminPublisher, "id" | "created_at" | "updated_at"> = {
+  name: "",
+  platform: "twitch",
+  channel_url: "",
+  username: "",
+  avatar_url: "",
+  is_active: true,
+  points_per_minute: 1,
+  follower_count: 0,
+  description: "",
+  category: "",
 }
 
 export default function PublisherManager() {
-  // In a real app, this would fetch from an API
-  const [publishers, setPublishers] = useState<Publisher[]>([
-    {
-      id: "pub-1",
-      name: "GameMaster",
-      platform: "twitch",
-      image: "/neon-city-stream.png",
-      viewerCount: 12500,
-      pointMultiplier: 2,
-      streamUrl: "https://twitch.tv/gamemaster",
-      isActive: true,
-    },
-    {
-      id: "pub-2",
-      name: "ProGamer",
-      platform: "kick",
-      image: "/intense-fps-action.png",
-      viewerCount: 8700,
-      pointMultiplier: 1.5,
-      streamUrl: "https://kick.com/progamer",
-      isActive: true,
-    },
-    {
-      id: "pub-3",
-      name: "StreamQueen",
-      platform: "twitch",
-      image: "/epic-moba-battle.png",
-      viewerCount: 15300,
-      pointMultiplier: 2.5,
-      streamUrl: "https://twitch.tv/streamqueen",
-      isActive: true,
-    },
-  ])
+  const {
+    publishers,
+    isLoading: isListLoading, // Renamed for clarity
+    isSubmitting, // New state for form operations
+    error: adminError,
+    fetchAdminPublishers,
+    addPublisher,
+    updatePublisher,
+    deletePublisher,
+  } = useAdminStore()
 
-  const [isEditing, setIsEditing] = useState<boolean>(false)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<string>("publishers")
-
-  const [currentPublisher, setCurrentPublisher] = useState<Publisher>({
-    id: "",
-    name: "",
-    platform: "twitch",
-    image: "",
-    viewerCount: 0,
-    pointMultiplier: 1,
-    streamUrl: "",
-    isActive: true,
-  })
+  const [currentPublisher, setCurrentPublisher] = useState<Partial<AdminPublisher>>(INITIAL_PUBLISHER_STATE)
+  const [isEditing, setIsEditing] = useState<boolean>(false)
 
   const { toast } = useToast()
 
-  const handleImageSelect = (imageData: { url: string; file?: File }) => {
-    setCurrentPublisher({
-      ...currentPublisher,
-      image: imageData.url,
-    })
+  useEffect(() => {
+    fetchAdminPublishers()
+  }, [fetchAdminPublishers])
 
-    // In a real app, you would upload the file to your server or cloud storage
-    // and then update the image URL with the uploaded file URL
+  useEffect(() => {
+    if (adminError) {
+      toast({
+        title: "Hata Oluştu",
+        description: adminError,
+        variant: "destructive",
+      })
+    }
+  }, [adminError, toast])
+
+  const handleImageSelect = (imageData: { url: string; file?: File }) => {
+    setCurrentPublisher((prev) => ({
+      ...prev,
+      avatar_url: imageData.url,
+    }))
     if (imageData.file) {
-      console.log("File selected:", imageData.file)
-      // uploadImageToServer(imageData.file).then(url => {
-      //   setCurrentPublisher(prev => ({ ...prev, image: url }))
-      // })
+      console.log("Selected image file:", imageData.file)
     }
   }
 
   const resetForm = () => {
-    setCurrentPublisher({
-      id: "",
-      name: "",
-      platform: "twitch",
-      image: "",
-      viewerCount: 0,
-      pointMultiplier: 1,
-      streamUrl: "",
-      isActive: true,
-    })
+    setCurrentPublisher(INITIAL_PUBLISHER_STATE)
     setIsEditing(false)
   }
 
-  const handleEditPublisher = (publisher: Publisher) => {
+  const handleEditPublisher = (publisher: AdminPublisher) => {
     setCurrentPublisher(publisher)
     setIsEditing(true)
     setActiveTab("edit")
   }
 
-  const handleDeletePublisher = (id: string) => {
-    // In a real app, you would make an API call to delete the publisher
-    setPublishers(publishers.filter((pub) => pub.id !== id))
-
-    toast({
-      title: "Başarılı",
-      description: "Yayıncı silindi.",
-      variant: "default",
-    })
+  const handleDeletePublisher = async (id: string) => {
+    if (!id) {
+      toast({ title: "Hata", description: "Geçersiz yayıncı ID.", variant: "destructive" })
+      return
+    }
+    if (window.confirm("Bu yayıncıyı silmek istediğinizden emin misiniz?")) {
+      const success = await deletePublisher(id)
+      if (success) {
+        toast({
+          title: "Başarılı",
+          description: "Yayıncı silindi.",
+        })
+        // fetchAdminPublishers(); // Re-fetch is now handled in the store
+      } else {
+        // Error toast is handled by the store's error state
+      }
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
 
-    // Validate form
-    if (!currentPublisher.name.trim()) {
+    const publisherDataToSubmit: Omit<AdminPublisher, "id" | "created_at" | "updated_at"> = {
+      name: currentPublisher.name || "",
+      platform: currentPublisher.platform || "twitch",
+      channel_url: currentPublisher.channel_url || "",
+      username: currentPublisher.username || "",
+      avatar_url: currentPublisher.avatar_url || undefined,
+      is_active: currentPublisher.is_active === undefined ? true : currentPublisher.is_active,
+      points_per_minute: Number(currentPublisher.points_per_minute) || 1,
+      follower_count: Number(currentPublisher.follower_count) || 0,
+      description: currentPublisher.description || undefined,
+      category: currentPublisher.category || undefined,
+    }
+
+    if (!publisherDataToSubmit.name || !publisherDataToSubmit.username || !publisherDataToSubmit.channel_url) {
       toast({
         title: "Hata",
-        description: "Yayıncı adı boş olamaz.",
+        description: "Yayıncı adı, kullanıcı adı ve kanal URL'si zorunludur.",
         variant: "destructive",
       })
-      setIsLoading(false)
       return
     }
 
-    if (!currentPublisher.image) {
-      toast({
-        title: "Hata",
-        description: "Lütfen bir görsel seçin.",
-        variant: "destructive",
-      })
-      setIsLoading(false)
-      return
+    let success = false
+    if (isEditing && currentPublisher.id) {
+      const result = await updatePublisher(currentPublisher.id, publisherDataToSubmit)
+      if (result) success = true
+    } else {
+      const result = await addPublisher(publisherDataToSubmit)
+      if (result) success = true
     }
 
-    if (!currentPublisher.streamUrl) {
+    if (success) {
       toast({
-        title: "Hata",
-        description: "Yayın URL'si boş olamaz.",
-        variant: "destructive",
+        title: "Başarılı",
+        description: isEditing ? "Yayıncı güncellendi." : "Yeni yayıncı eklendi.",
       })
-      setIsLoading(false)
-      return
-    }
-
-    // Simulate API call
-    setTimeout(() => {
-      if (isEditing) {
-        // Update existing publisher
-        setPublishers(publishers.map((pub) => (pub.id === currentPublisher.id ? currentPublisher : pub)))
-
-        toast({
-          title: "Başarılı",
-          description: "Yayıncı güncellendi.",
-          variant: "default",
-        })
-      } else {
-        // Add new publisher
-        const newPublisher = {
-          ...currentPublisher,
-          id: `pub-${Date.now()}`, // Generate a unique ID
-        }
-
-        setPublishers([...publishers, newPublisher])
-
-        toast({
-          title: "Başarılı",
-          description: "Yeni yayıncı eklendi.",
-          variant: "default",
-        })
-      }
-
       resetForm()
-      setIsLoading(false)
       setActiveTab("publishers")
-    }, 1000)
+      // fetchAdminPublishers(); // Re-fetch is now handled in the store
+    } else {
+      // Error toast is handled by the store's error state
+    }
+  }
+
+  if (isListLoading && publishers.length === 0) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-2">Yayıncılar yükleniyor...</p>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="publishers">Yayıncılar</TabsTrigger>
-          <TabsTrigger value="edit">{isEditing ? "Düzenle" : "Yeni Ekle"}</TabsTrigger>
+          <TabsTrigger value="publishers">Yayıncılar ({publishers.length})</TabsTrigger>
+          <TabsTrigger value="edit">{isEditing ? "Yayıncı Düzenle" : "Yeni Yayıncı Ekle"}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="publishers" className="space-y-4">
@@ -211,41 +175,73 @@ export default function PublisherManager() {
                 resetForm()
                 setActiveTab("edit")
               }}
-              className="bg-[#9146FF] hover:bg-[#7a38d5]"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               Yeni Yayıncı
             </Button>
           </div>
 
+          {publishers.length === 0 && !isListLoading && (
+            <p className="text-center text-muted-foreground py-4">Henüz yayıncı bulunmuyor.</p>
+          )}
+
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {publishers.map((publisher) => (
-              <Card key={publisher.id} className="overflow-hidden">
+              <Card key={publisher.id} className="overflow-hidden shadow-lg">
                 <div className="relative">
-                  <StreamCard
-                    platform={publisher.platform}
-                    image={publisher.image}
-                    streamerName={publisher.name}
-                    viewerCount={publisher.viewerCount}
-                    pointMultiplier={publisher.pointMultiplier}
-                    streamUrl={publisher.streamUrl}
-                    isSubscribed={false}
-                  />
+                  <div className="relative aspect-video bg-muted">
+                    {publisher.avatar_url ? (
+                      <img
+                        src={publisher.avatar_url || "/placeholder.svg"}
+                        alt={publisher.name}
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <ImageIcon className="h-16 w-16 text-muted-foreground" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-lg truncate" title={publisher.name}>
+                      {publisher.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {publisher.platform} - @{publisher.username}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate" title={publisher.channel_url || ""}>
+                      {publisher.channel_url}
+                    </p>
+                    <div className="mt-2 flex justify-between items-center text-xs">
+                      <span>Takipçi: {publisher.follower_count}</span>
+                      <span>Puan/dk: {publisher.points_per_minute}</span>
+                    </div>
+                    <Badge
+                      variant={publisher.is_active ? "default" : "outline"}
+                      className={`mt-2 ${publisher.is_active ? "bg-green-600 text-white" : "border-yellow-500 text-yellow-500"}`}
+                    >
+                      {publisher.is_active ? "Aktif" : "Pasif"}
+                    </Badge>
+                  </div>
 
-                  <div className="absolute top-2 left-2 flex gap-1">
+                  <div className="absolute top-2 right-2 flex gap-1">
                     <Button
                       variant="secondary"
                       size="icon"
-                      className="h-8 w-8 rounded-full bg-gray-900/80 backdrop-blur-sm"
+                      className="h-8 w-8 rounded-full bg-background/80 backdrop-blur-sm hover:bg-muted"
                       onClick={() => handleEditPublisher(publisher)}
+                      aria-label="Yayıncıyı düzenle"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="icon"
-                      className="h-8 w-8 rounded-full bg-red-900/80 backdrop-blur-sm"
-                      onClick={() => handleDeletePublisher(publisher.id)}
+                      className="h-8 w-8 rounded-full bg-red-600/80 text-white backdrop-blur-sm hover:bg-red-700/80"
+                      onClick={() => publisher.id && handleDeletePublisher(publisher.id)}
+                      disabled={isSubmitting}
+                      aria-label="Yayıncıyı sil"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -269,31 +265,32 @@ export default function PublisherManager() {
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-6">
                 <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="name">Yayıncı Adı</Label>
                     <Input
                       id="name"
-                      value={currentPublisher.name}
-                      onChange={(e) =>
-                        setCurrentPublisher({
-                          ...currentPublisher,
-                          name: e.target.value,
-                        })
-                      }
-                      placeholder="Yayıncı adı"
-                      className="w-full"
+                      value={currentPublisher.name || ""}
+                      onChange={(e) => setCurrentPublisher({ ...currentPublisher, name: e.target.value })}
+                      placeholder="Örn: Ninja"
+                      required
                     />
                   </div>
-
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="username">Platform Kullanıcı Adı</Label>
+                    <Input
+                      id="username"
+                      value={currentPublisher.username || ""}
+                      onChange={(e) => setCurrentPublisher({ ...currentPublisher, username: e.target.value })}
+                      placeholder="Örn: ninja (Twitch/Kick kullanıcı adı)"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
                     <Label htmlFor="platform">Platform</Label>
                     <Select
-                      value={currentPublisher.platform}
+                      value={currentPublisher.platform || "twitch"}
                       onValueChange={(value: "twitch" | "kick") =>
-                        setCurrentPublisher({
-                          ...currentPublisher,
-                          platform: value,
-                        })
+                        setCurrentPublisher({ ...currentPublisher, platform: value })
                       }
                     >
                       <SelectTrigger id="platform">
@@ -305,98 +302,101 @@ export default function PublisherManager() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="viewerCount">İzleyici Sayısı</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="channel_url">Kanal URL'si</Label>
                     <Input
-                      id="viewerCount"
+                      id="channel_url"
+                      type="url"
+                      value={currentPublisher.channel_url || ""}
+                      onChange={(e) => setCurrentPublisher({ ...currentPublisher, channel_url: e.target.value })}
+                      placeholder="https://twitch.tv/kullaniciadi"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="points_per_minute">Dakika Başına Puan</Label>
+                    <Input
+                      id="points_per_minute"
                       type="number"
-                      value={currentPublisher.viewerCount}
+                      value={currentPublisher.points_per_minute || 1}
                       onChange={(e) =>
                         setCurrentPublisher({
                           ...currentPublisher,
-                          viewerCount: Number.parseInt(e.target.value) || 0,
+                          points_per_minute: Number.parseInt(e.target.value) || 0,
                         })
                       }
-                      placeholder="İzleyici sayısı"
                       min="0"
-                      className="w-full"
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pointMultiplier">Puan Çarpanı</Label>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="follower_count">Takipçi Sayısı (Opsiyonel)</Label>
                     <Input
-                      id="pointMultiplier"
+                      id="follower_count"
                       type="number"
-                      value={currentPublisher.pointMultiplier}
+                      value={currentPublisher.follower_count || 0}
                       onChange={(e) =>
                         setCurrentPublisher({
                           ...currentPublisher,
-                          pointMultiplier: Number.parseFloat(e.target.value) || 1,
+                          follower_count: Number.parseInt(e.target.value) || 0,
                         })
                       }
-                      placeholder="Puan çarpanı"
-                      min="0.1"
-                      step="0.1"
-                      className="w-full"
+                      min="0"
                     />
                   </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="streamUrl">Yayın URL'si</Label>
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label htmlFor="category">Kategori (Opsiyonel)</Label>
                     <Input
-                      id="streamUrl"
-                      value={currentPublisher.streamUrl}
-                      onChange={(e) =>
-                        setCurrentPublisher({
-                          ...currentPublisher,
-                          streamUrl: e.target.value,
-                        })
-                      }
-                      placeholder="https://twitch.tv/username veya https://kick.com/username"
-                      className="w-full"
+                      id="category"
+                      value={currentPublisher.category || ""}
+                      onChange={(e) => setCurrentPublisher({ ...currentPublisher, category: e.target.value })}
+                      placeholder="Örn: FPS, MOBA, Just Chatting"
                     />
                   </div>
-
-                  <div className="flex items-center space-x-2 md:col-span-2">
-                    <Checkbox
-                      id="isActive"
-                      checked={currentPublisher.isActive}
-                      onCheckedChange={(checked) =>
-                        setCurrentPublisher({
-                          ...currentPublisher,
-                          isActive: checked === true,
-                        })
-                      }
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
+                    <Textarea
+                      id="description"
+                      value={currentPublisher.description || ""}
+                      onChange={(e) => setCurrentPublisher({ ...currentPublisher, description: e.target.value })}
+                      placeholder="Yayıncı hakkında kısa bilgi"
+                      rows={3}
                     />
-                    <Label htmlFor="isActive">Aktif</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 pt-4">
+                    <Checkbox
+                      id="is_active_publisher"
+                      checked={currentPublisher.is_active === undefined ? true : currentPublisher.is_active}
+                      onCheckedChange={(checked) => setCurrentPublisher({ ...currentPublisher, is_active: !!checked })}
+                    />
+                    <Label htmlFor="is_active_publisher">Aktif Yayıncı</Label>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Yayıncı Görseli</Label>
+                <div className="space-y-1.5">
+                  <Label>Yayıncı Avatarı (URL veya Yükleme)</Label>
                   <ImageUploader
                     onImageSelect={handleImageSelect}
-                    defaultImageUrl={currentPublisher.image}
-                    title="Yayıncı Görseli"
-                    description="Yayıncı için bir görsel yükleyin veya platform profilinden alın."
+                    defaultImageUrl={currentPublisher.avatar_url || ""}
+                    title="Yayıncı Avatarı"
+                    description="Yayıncı için bir avatar URL'i girin veya yeni bir görsel yükleyin."
                   />
                 </div>
 
-                {currentPublisher.image && (
+                {(currentPublisher.name || currentPublisher.avatar_url) && (
                   <div className="space-y-2">
                     <Label>Önizleme</Label>
-                    <div className="max-w-sm mx-auto">
-                      <StreamCard
-                        platform={currentPublisher.platform}
-                        image={currentPublisher.image}
-                        streamerName={currentPublisher.name || "Yayıncı Adı"}
-                        viewerCount={currentPublisher.viewerCount}
-                        pointMultiplier={currentPublisher.pointMultiplier}
-                        streamUrl={currentPublisher.streamUrl || "#"}
-                        size="sm"
-                      />
+                    <div className="max-w-xs mx-auto border rounded-lg p-4 bg-muted/50">
+                      {currentPublisher.avatar_url && (
+                        <img
+                          src={currentPublisher.avatar_url || "/placeholder.svg"}
+                          alt="avatar"
+                          className="w-20 h-20 rounded-full mx-auto mb-2 object-cover"
+                        />
+                      )}
+                      <p className="text-center font-semibold">{currentPublisher.name || "Yayıncı Adı"}</p>
+                      <p className="text-center text-sm text-muted-foreground">
+                        @{currentPublisher.username || "kullaniciadi"}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -413,18 +413,13 @@ export default function PublisherManager() {
                 >
                   İptal
                 </Button>
-                <Button type="submit" disabled={isLoading} className="bg-[#9146FF] hover:bg-[#7a38d5]">
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isEditing ? "Güncelleniyor..." : "Ekleniyor..."}
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 h-4 w-4" />
-                      {isEditing ? "Güncelle" : "Ekle"}
-                    </>
-                  )}
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {isEditing ? "Güncelle" : "Kaydet"}
                 </Button>
               </CardFooter>
             </form>

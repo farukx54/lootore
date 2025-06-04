@@ -10,15 +10,16 @@ import MessagingDropdown from "./messaging-dropdown"
 import { useAuthStore } from "@/lib/stores/auth-store"
 
 export default function Navbar() {
-  const { user, isLoggedIn, isLoading, login, logout, initialize } = useAuthStore()
+  // checkSession fonksiyonunu initialize yerine kullan
+  const { user, isLoggedIn, isLoading, login, logout, checkSession } = useAuthStore()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
 
-  // Initialize auth on component mount
+  // Sayfa yüklendiğinde session'ı kontrol et
   useEffect(() => {
-    initialize()
-  }, [initialize])
+    checkSession() // initialize yerine checkSession çağır
+  }, [checkSession])
 
   const handleLogin = () => {
     router.push("/login")
@@ -37,7 +38,6 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/80 backdrop-blur-md">
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex h-16 items-center justify-between gap-2 sm:gap-4">
-          {/* Logo - Make it smaller on mobile */}
           <Link href="/" className="flex items-center">
             <span className="text-xl sm:text-2xl font-extrabold">
               <span className="bg-gradient-to-r from-[#9146FF] via-white to-[#00FF00] bg-clip-text text-transparent">
@@ -46,7 +46,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex md:items-center md:space-x-6 flex-1 justify-center">
             <Link
               href="/"
@@ -82,7 +81,6 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Adjust the auth container width */}
           <div className="flex items-center justify-end w-auto sm:w-[120px] md:w-[180px]">
             {isLoading ? (
               <div className="h-8 w-8 rounded-full bg-gray-800 animate-pulse"></div>
@@ -99,7 +97,6 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Increase spacing for mobile menu button */}
             <button
               className="ml-2 sm:ml-4 md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#9146FF] focus:ring-offset-2 focus:ring-offset-black"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -117,7 +114,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden" id="mobile-menu">
           <nav aria-label="Mobile Navigation">

@@ -6,18 +6,31 @@ const publicRoutes = ["/", "/nasil-kazanilir", "/yayinlar", "/oduller"]
 const authRoutes = ["/login"]
 const protectedRoutes = ["/profile"]
 const adminRoutes = ["/admin"]
+const adminAuthRoutes = ["/admin/login"]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Get auth status from cookies (will be set by the auth store)
+  // Get auth status from cookies
   const isLoggedIn = request.cookies.get("auth-logged-in")?.value === "true"
   const isAdminLoggedIn = request.cookies.get("admin-logged-in")?.value === "true"
 
-  // Admin routes protection
-  if (adminRoutes.some((route) => pathname.startsWith(route))) {
+  // Admin routes protection - STRICT MODE
+  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
+    console.log("Admin route detected:", pathname)
+    console.log("Admin logged in:", isAdminLoggedIn)
+
     if (!isAdminLoggedIn) {
+      console.log("Redirecting to admin login")
       return NextResponse.redirect(new URL("/admin/login", request.url))
+    }
+    return NextResponse.next()
+  }
+
+  // Admin login page - redirect to admin if already logged in
+  if (pathname.startsWith("/admin/login")) {
+    if (isAdminLoggedIn) {
+      return NextResponse.redirect(new URL("/admin", request.url))
     }
     return NextResponse.next()
   }

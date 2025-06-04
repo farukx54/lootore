@@ -13,7 +13,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    /* Light mode primary - canlı bir mor */
+    --primary: 260 70% 50%; /* Örnek: Canlı bir mor */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -30,14 +31,14 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 222.2 84% 4.9%; /* Ring rengi primary ile uyumlu olabilir */
 
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 222.2 84% 4.9%; /* Koyu gri/siyah */
+    --foreground: 210 40% 98%; /* Beyaz */
 
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
@@ -45,8 +46,9 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Dark mode primary - daha canlı bir mor */
+    --primary: 250 80% 65%; /* Örnek: Koyu temada daha parlak bir mor */
+    --primary-foreground: 222.2 47.4% 11.2%; /* Koyu renk yazı */
 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
@@ -62,7 +64,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 250 80% 75%; /* Ring rengi primary ile uyumlu olabilir */
   }
 }
 
@@ -410,8 +412,8 @@ section {
   overflow-y: visible;
 }
 
-/* Specific fix for digital-weave.png background */ \
-.earn-points-hero-section .bg-\[url('/digital-weave.png')\] {
+/* Specific fix for digital-weave.png background */
+.earn-points-hero-section .bg-\[url$$\'/digital-weave.png\'$$\] {\
   background-size: cover;
   background-position: center;
   max-height: 100%;

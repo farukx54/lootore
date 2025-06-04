@@ -1,90 +1,89 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/stores/auth-store"
 import { useAdminStore } from "@/lib/stores/admin-store"
-import { authService } from "@/lib/services/auth-service"
-import { adminService } from "@/lib/services/admin-service"
 import LoadingScreen from "./loading-screen"
 
 interface AuthGuardProps {
   children: React.ReactNode
-  requireAuth?: boolean
-  requireAdmin?: boolean
-  redirectTo?: string
 }
 
-export default function AuthGuard({ children, requireAuth = false, requireAdmin = false, redirectTo }: AuthGuardProps) {
-  const [isChecking, setIsChecking] = useState(true)
+export default function AuthGuard({ children }: AuthGuardProps) {
+  const pathname = usePathname()
   const router = useRouter()
 
-  const { isLoggedIn, user, login, logout } = useAuthStore()
-  const { isAdminLoggedIn, adminUser, adminLogin, adminLogout } = useAdminStore()
+  const { isLoggedIn } = useAuthStore()
+  const { isAdminLoggedIn, checkAdminSession, isLoading: isAdminLoading } = useAdminStore()
+
+  const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // Check regular user auth if required
-        if (requireAuth && !isLoggedIn) {
-          const refreshedUser = await authService.refreshSession()
-          if (refreshedUser) {
-            login(refreshedUser)
-            document.cookie = "auth-logged-in=true; path=/; max-age=86400"
-          } else {
-            const redirect = redirectTo || "/login"
-            router.push(redirect)
-            return
-          }
-        }
+    const performChecks = async () => {
+      setIsChecking(true)
 
-        // Check admin auth if required
-        if (requireAdmin && !isAdminLoggedIn) {
-          const adminUser = await adminService.verifyAdminSession()
-          if (adminUser) {
-            adminLogin(adminUser)
-            document.cookie = "admin-logged-in=true; path=/; max-age=86400"
-          } else {
-            router.push("/admin/login")
-            return
-          }
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
+      if (pathname?.startsWith("/admin") && !pathname?.startsWith("/admin/login")) {
+        console.log("AuthGuard: Checking admin session for", pathname)
+        await checkAdminSession()
+      }
 
-        if (requireAuth) {
-          logout()
-          document.cookie = "auth-logged-in=false; path=/"
-          router.push(redirectTo || "/login")
-        }
+      setIsChecking(false)
+    }
 
-        if (requireAdmin) {
-          adminLogout()
-          document.cookie = "admin-logged-in=false; path=/"
-          router.push("/admin/login")
-        }
-      } finally {
-        setIsChecking(false)
+    performChecks()
+  }, [pathname, checkAdminSession])
+
+  useEffect(() => {
+    if (isChecking) return
+
+    if (pathname?.startsWith("/admin") && !pathname?.startsWith("/admin/login")) {
+      if (!isAdminLoggedIn) {
+        console.log("AuthGuard: Redirecting to admin login")
+        router.push("/admin/login")
+        return
       }
     }
 
-    checkAuth()
-  }, [requireAuth, requireAdmin, isLoggedIn, isAdminLoggedIn, router, redirectTo])
+    if (pathname === "/admin/login" && isAdminLoggedIn) {
+      console.log("AuthGuard: Admin already logged in, redirecting to /admin")
+      router.push("/admin")
+      return
+    }
 
-  if (isChecking) {
+    const protectedUserRoutes = ["/profile"]
+    if (protectedUserRoutes.some((route) => pathname?.startsWith(route))) {
+      if (!isLoggedIn) {
+        console.log("AuthGuard: User not logged in, redirecting to login")
+        const redirectUrl = new URL("/login", window.location.origin)
+        redirectUrl.searchParams.set("redirect", pathname)
+        router.push(redirectUrl.toString())
+        return
+      }
+    }
+
+    const authRoutes = ["/login"]
+    if (authRoutes.some((route) => pathname?.startsWith(route)) && isLoggedIn) {
+      console.log("AuthGuard: User already logged in, redirecting to home")
+      router.push("/")
+      return
+    }
+  }, [isChecking, pathname, isAdminLoggedIn, isLoggedIn, router])
+
+  if (isChecking || (pathname?.startsWith("/admin") && isAdminLoading)) {
     return <LoadingScreen />
   }
 
-  // If auth is required but user is not logged in, don't render children
-  if (requireAuth && !isLoggedIn) {
-    return null
+  if (pathname?.startsWith("/admin") && !pathname?.startsWith("/admin/login") && !isAdminLoggedIn) {
+    console.log("AuthGuard: Blocking admin route access")
+    return <LoadingScreen /> // Yönlendirme sırasında LoadingScreen göster
   }
 
-  // If admin is required but admin is not logged in, don't render children
-  if (requireAdmin && !isAdminLoggedIn) {
-    return null
+  const protectedUserRoutes = ["/profile"]
+  if (protectedUserRoutes.some((route) => pathname?.startsWith(route)) && !isLoggedIn) {
+    console.log("AuthGuard: Blocking protected user route access")
+    return <LoadingScreen /> // Yönlendirme sırasında LoadingScreen göster
   }
 
   return <>{children}</>

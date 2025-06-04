@@ -9,6 +9,8 @@ type Coupon = Tables["coupons"]["Row"]
 type UserActivity = Tables["user_activities"]["Row"]
 
 export class SupabaseService {
+  private user: User | null = null // Declare user variable
+
   // Users
   async getUsers(limit = 50): Promise<User[]> {
     try {
@@ -102,7 +104,28 @@ export class SupabaseService {
   }
 
   // Coupons/Rewards
-  async getCoupons(category?: string): Promise<Coupon[]> {
+  async getCategories(): Promise<{ data: string[] | null; error: any }> {
+    try {
+      const { data, error } = await supabase
+        .from("coupons")
+        .select("category")
+        .eq("is_active", true)
+        .not("category", "is", null)
+
+      if (error) throw error
+
+      // Benzersiz kategorileri al ve "all" kategorisini başa ekle
+      const uniqueCategories = Array.from(new Set(data?.map((item) => item.category) || []))
+      const categoriesWithAll = ["all", ...uniqueCategories]
+
+      return { data: categoriesWithAll, error: null }
+    } catch (error) {
+      console.error("Error fetching categories:", error)
+      return { data: null, error }
+    }
+  }
+
+  async getCoupons(category?: string): Promise<{ data: Coupon[] | null; error: any }> {
     try {
       let query = supabase
         .from("coupons")
@@ -117,14 +140,14 @@ export class SupabaseService {
 
       const { data, error } = await query
       if (error) throw error
-      return data || []
+      return { data: data || [], error: null }
     } catch (error) {
       console.error("Error fetching coupons:", error)
-      throw new AuthException(AuthErrorCode.DATABASE_ERROR, "Failed to fetch rewards")
+      return { data: null, error }
     }
   }
 
-  async searchCoupons(searchQuery: string, category?: string): Promise<Coupon[]> {
+  async searchCoupons(searchQuery: string, category?: string): Promise<{ data: Coupon[] | null; error: any }> {
     try {
       let query = supabase
         .from("coupons")
@@ -141,15 +164,19 @@ export class SupabaseService {
 
       const { data, error } = await query
       if (error) throw error
-      return data || []
+      return { data: data || [], error: null }
     } catch (error) {
       console.error("Error searching coupons:", error)
-      return []
+      return { data: null, error }
     }
   }
 
-  async redeemCoupon(userId: string, couponId: string): Promise<boolean> {
+  async redeemCoupon(couponId: string): Promise<{ error: any }> {
     try {
+      if (!this.user) {
+        throw new AuthException(AuthErrorCode.USER_NOT_FOUND, "User not found")
+      }
+
       // Start transaction
       const { data: coupon, error: couponError } = await supabase
         .from("coupons")
@@ -163,17 +190,17 @@ export class SupabaseService {
         throw new AuthException(AuthErrorCode.VALIDATION_ERROR, "Coupon not available")
       }
 
-      const { data: user, error: userError } = await supabase
+      const { data: userData, error: userError } = await supabase
         .from("users")
         .select("ore_points")
-        .eq("id", userId)
+        .eq("id", this.user.id)
         .single()
 
-      if (userError || !user) {
+      if (userError || !userData) {
         throw new AuthException(AuthErrorCode.USER_NOT_FOUND, "User not found")
       }
 
-      if (user.ore_points < coupon.ore_points_required) {
+      if (userData.ore_points < coupon.ore_points_required) {
         throw new AuthException(AuthErrorCode.INSUFFICIENT_POINTS, "Insufficient Ore Points")
       }
 
@@ -181,10 +208,10 @@ export class SupabaseService {
       const { error: updateUserError } = await supabase
         .from("users")
         .update({
-          ore_points: user.ore_points - coupon.ore_points_required,
+          ore_points: userData.ore_points - coupon.ore_points_required,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", userId)
+        .eq("id", this.user.id)
 
       if (updateUserError) throw updateUserError
 
@@ -199,13 +226,18 @@ export class SupabaseService {
       if (updateCouponError) throw updateCouponError
 
       // Log activity
-      await this.logUserActivity(userId, "reward_redeemed", -coupon.ore_points_required, `Redeemed: ${coupon.title}`)
+      await this.logUserActivity(
+        this.user.id,
+        "coupon_redeem",
+        -coupon.ore_points_required,
+        `Redeemed: ${coupon.title}`,
+      )
 
-      return true
+      return { error: null }
     } catch (error) {
       console.error("Error redeeming coupon:", error)
-      if (error instanceof AuthException) throw error
-      throw new AuthException(AuthErrorCode.DATABASE_ERROR, "Failed to redeem coupon")
+      if (error instanceof AuthException) return { error }
+      return { error: new AuthException(AuthErrorCode.DATABASE_ERROR, "Failed to redeem coupon") }
     }
   }
 

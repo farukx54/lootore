@@ -1,10 +1,11 @@
 import type React from "react"
+import "@/app/globals.css" // globals.css en üstte olmalı
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
-import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
+import AuthGuard from "@/components/auth-guard"
 import Navbar from "@/components/navbar"
-import LoadingScreen from "@/components/loading-screen"
+import Footer from "@/components/footer" // Footer'ı import et
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -14,48 +15,18 @@ export const metadata: Metadata = {
     generator: 'v0.dev'
 }
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="tr" suppressHydrationWarning>
-      <body className={`${inter.className} bg-black text-white antialiased`}>
+      <body className={`${inter.className} bg-black text-white antialiased flex flex-col min-h-screen`}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
-          <LoadingScreen />
           <Navbar />
-          {children}
-          <footer className="border-t border-gray-800 bg-black py-8">
-            <div className="container mx-auto px-4">
-              <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
-                <div className="flex items-center">
-                  <span className="text-xl font-extrabold">
-                    <span className="bg-gradient-to-r from-[#9146FF] via-white to-[#00FF00] bg-clip-text text-transparent">
-                      LootOre
-                    </span>
-                  </span>
-                </div>
-                <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-400">
-                  <a href="#" className="hover:text-white">
-                    Hakkımızda
-                  </a>
-                  <a href="#" className="hover:text-white">
-                    Gizlilik Politikası
-                  </a>
-                  <a href="#" className="hover:text-white">
-                    Kullanım Şartları
-                  </a>
-                  <a href="#" className="hover:text-white">
-                    İletişim
-                  </a>
-                </div>
-                <div className="text-sm text-gray-500">
-                  &copy; {new Date().getFullYear()} LootOre. Tüm hakları saklıdır.
-                </div>
-              </div>
-            </div>
-          </footer>
+          <main className="flex-grow">
+            {" "}
+            {/* Ana içeriği main içine al */}
+            <AuthGuard>{children}</AuthGuard>
+          </main>
+          <Footer /> {/* Footer'ı ekle */}
         </ThemeProvider>
       </body>
     </html>

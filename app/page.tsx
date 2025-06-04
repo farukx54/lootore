@@ -15,11 +15,6 @@ export default function Home() {
     setIsLoggedIn(loggedInStatus)
   }, [])
 
-  const handleLogin = () => {
-    // Implement your login logic here
-    console.log("Login clicked")
-  }
-
   return (
     <main className="flex min-h-screen flex-col">
       {/* Hero Section */}
@@ -196,25 +191,13 @@ export default function Home() {
               <p className="mb-6 text-gray-300">
                 Twitch veya Kick hesabınızla giriş yapın ve puanları biriktirmeye başlayın!
               </p>
-              <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-                <Button
-                  className="w-full bg-[#9146FF] hover:bg-[#7a38d5] sm:w-auto cursor-pointer"
-                  onClick={handleLogin}
-                >
-                  <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5 pointer-events-none" fill="#FFFFFF">
-                    <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z" />
-                  </svg>
-                  <span className="select-none">Twitch ile Giriş Yap</span>
-                </Button>
-                <Button
-                  className="w-full bg-[#00FF00] hover:bg-[#00cc00] sm:w-auto cursor-pointer"
-                  onClick={handleLogin}
-                >
-                  <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5 pointer-events-none" fill="#FFFFFF">
-                    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm-2 16.5v-9l7 4.5-7 4.5z" />
-                  </svg>
-                  <span className="select-none">Kick ile Giriş Yap</span>
-                </Button>
+              <div className="text-center">
+                <p className="text-lg text-white mb-2">🎮 Favori yayıncılarınızı izleyin</p>
+                <p className="text-lg text-white mb-2">⭐ Her dakika puan kazanın</p>
+                <p className="text-lg text-white mb-4">🎁 Puanlarınızı harika ödüllerle değiştirin</p>
+                <p className="text-sm text-gray-400">
+                  Giriş yapmak için üst menüden "Giriş Yap" butonunu kullanabilirsiniz.
+                </p>
               </div>
             </div>
           </div>

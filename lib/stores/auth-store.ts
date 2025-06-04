@@ -1,99 +1,155 @@
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import type { Database } from "../supabase/types"
-
-type UserProfile = Database["public"]["Tables"]["users"]["Row"]
+import type { User } from "../types/auth"
 
 interface AuthState {
-  user: UserProfile | null
-  session: any | null
+  user: User | null
   isLoggedIn: boolean
   isLoading: boolean
   error: string | null
 
   // Actions
-  initialize: () => Promise<void>
-  login: (provider: "twitch" | "kick") => Promise<void> // Kick eklendi
-  logout: () => Promise<void>
+  login: (user: User) => void
+  logout: () => void
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+
+  // Session kontrolü için yeni fonksiyon ekliyoruz
+  checkSession: () => Promise<void>
+
+  // Diğer mevcut fonksiyonlar...
+  checkIfUsernameExists: (username: string) => Promise<boolean>
+  updateUsername: (username: string) => Promise<boolean>
 }
 
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set, get) => ({
-      user: null,
-      session: null,
-      isLoggedIn: false,
-      isLoading: true,
-      error: null,
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  isLoggedIn: false,
+  isLoading: false,
+  error: null,
 
-      initialize: async () => {
-        try {
-          const supabase = createClientComponentClient<Database>()
-          const {
-            data: { session },
-          } = await supabase.auth.getSession()
+  login: (user) => {
+    set({ user, isLoggedIn: true, error: null })
+    // Normal kullanıcı cookie'si
+    if (typeof document !== "undefined") {
+      document.cookie = "auth-logged-in=true; path=/; max-age=86400"
+    }
+  },
 
-          if (session) {
-            const { data: profile } = await supabase.from("users").select("*").eq("id", session.user.id).single()
-            set({
-              session,
-              user: profile || null,
-              isLoggedIn: !!profile,
-              isLoading: false,
-            })
-          } else {
-            set({ isLoggedIn: false, isLoading: false })
-          }
-        } catch (error) {
-          console.error("Auth initialization error:", error)
-          set({ isLoggedIn: false, isLoading: false, error: "Failed to initialize auth" })
+  logout: () => {
+    set({ user: null, isLoggedIn: false, error: null })
+    // Normal kullanıcı cookie'sini sil
+    if (typeof document !== "undefined") {
+      document.cookie = "auth-logged-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+    }
+  },
+
+  setLoading: (loading) => set({ isLoading: loading }),
+
+  setError: (error) => set({ error }),
+
+  // Session kontrolü için yeni fonksiyon
+  checkSession: async () => {
+    set({ isLoading: true })
+    const supabase = createClientComponentClient<Database>()
+
+    try {
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession()
+
+      if (error) {
+        console.error("Session check error:", error)
+        set({ user: null, isLoggedIn: false, isLoading: false })
+        return
+      }
+
+      if (session?.user) {
+        // Kullanıcı bilgilerini users tablosundan çek
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", session.user.id)
+          .single()
+
+        if (userError || !userData) {
+          console.error("User data fetch error:", userError)
+          set({ user: null, isLoggedIn: false, isLoading: false })
+          return
         }
-      },
 
-      login: async (provider: "twitch" | "kick") => {
-        try {
-          set({ isLoading: true, error: null })
-          const supabase = createClientComponentClient<Database>()
-
-          if (provider === "twitch") {
-            await supabase.auth.signInWithOAuth({
-              provider: "twitch",
-              options: {
-                redirectTo: `${window.location.origin}/auth/callback`,
-              },
-            })
-          } else if (provider === "kick") {
-            // Kick login için "Yakında Gelecek" uyarısı
-            // Bu kısım UI tarafında yönetilmeli, store sadece hatayı set edebilir veya özel bir state tutabilir.
-            // Şimdilik bir console log ve error state'i set edelim.
-            console.warn("Kick login is coming soon!")
-            // Toast hook'unu burada doğrudan kullanamayız, UI bileşeninde kullanılmalı.
-            // Bunun yerine bir error mesajı set edebiliriz.
-            set({ isLoading: false, error: "Kick ile giriş özelliği yakında eklenecektir." })
-            // Veya UI'da bu provider tıklandığında toast gösterilir.
-          }
-        } catch (error: any) {
-          console.error("Login error:", error)
-          set({ isLoading: false, error: error.message || "Login failed" })
+        const user: User = {
+          id: userData.id,
+          email: userData.email || session.user.email || "",
+          username: userData.username,
+          displayName: userData.display_name,
+          orePoints: userData.ore_points || 0,
+          // Diğer user alanları...
         }
-      },
 
-      logout: async () => {
-        try {
-          set({ isLoading: true })
-          const supabase = createClientComponentClient<Database>()
-          await supabase.auth.signOut()
-          set({ user: null, session: null, isLoggedIn: false, isLoading: false })
-        } catch (error) {
-          console.error("Logout error:", error)
-          set({ isLoading: false, error: "Logout failed" })
+        set({ user, isLoggedIn: true, isLoading: false })
+
+        // Cookie'yi set et
+        if (typeof document !== "undefined") {
+          document.cookie = "auth-logged-in=true; path=/; max-age=86400"
         }
-      },
-    }),
-    {
-      name: "auth-storage",
-      partialize: (state) => ({ user: state.user, isLoggedIn: state.isLoggedIn }),
-    },
-  ),
-)
+      } else {
+        set({ user: null, isLoggedIn: false, isLoading: false })
+
+        // Cookie'yi sil
+        if (typeof document !== "undefined") {
+          document.cookie = "auth-logged-in=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+        }
+      }
+    } catch (error) {
+      console.error("Session check error:", error)
+      set({ user: null, isLoggedIn: false, isLoading: false, error: "Session check failed" })
+    }
+  },
+
+  // Mevcut fonksiyonlar (örnek olarak, gerçek implementasyonları mevcut kodunuzda olmalı)
+  checkIfUsernameExists: async (username: string) => {
+    const supabase = createClientComponentClient<Database>()
+    try {
+      const { data, error } = await supabase.from("users").select("username").eq("username", username).maybeSingle()
+
+      if (error) {
+        console.error("Username check error:", error)
+        return false
+      }
+
+      return !!data // Kullanıcı adı varsa true, yoksa false
+    } catch (error) {
+      console.error("Username check error:", error)
+      return false
+    }
+  },
+
+  updateUsername: async (username: string) => {
+    const { user } = get()
+    if (!user) return false
+
+    const supabase = createClientComponentClient<Database>()
+    try {
+      const { data, error } = await supabase.from("users").update({ username }).eq("id", user.id).select().single()
+
+      if (error) {
+        console.error("Username update error:", error)
+        return false
+      }
+
+      if (data) {
+        // Store'daki user bilgisini güncelle
+        set({ user: { ...user, username: data.username } })
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error("Username update error:", error)
+      return false
+    }
+  },
+}))

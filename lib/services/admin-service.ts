@@ -1,9 +1,17 @@
-import { z } from "zod"
-import { AdminLoginSchema, AdminUserSchema, type AdminUser, type AdminLoginData } from "../types/admin"
+// import { z } from "zod" // Artık kullanılmıyor olabilir
+// import { AdminLoginSchema, AdminUserSchema, type AdminUser, type AdminLoginData } from "../types/admin" // Artık kullanılmıyor olabilir
 import { AuthException, AuthErrorCode } from "../types/auth"
+
+// Bu servis artık login/logout/session yönetimi yapmayacak.
+// Bu sorumluluklar useAdminStore'a ve Supabase client'ına geçti.
+// Eğer admin paneli için özel backend API endpoint'leriniz varsa,
+// bu servis o endpoint'lere istek atmak için kullanılabilir.
+// Şimdilik boş veya minimal bırakılabilir.
 
 class AdminService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    // Bu fonksiyon, admin-spesifik API endpoint'lerine istek atmak için kullanılabilir.
+    // Örnek: /api/admin/some-action
     const response = await fetch(`/api/admin${endpoint}`, {
       headers: {
         "Content-Type": "application/json",
@@ -16,67 +24,17 @@ class AdminService {
       const errorData = await response.json().catch(() => ({}))
       throw new AuthException(
         errorData.code || AuthErrorCode.UNAUTHORIZED,
-        errorData.message || "Admin request failed",
+        errorData.message || "Admin API request failed",
         errorData.details,
       )
     }
-
     return await response.json()
   }
 
-  async login(credentials: AdminLoginData): Promise<AdminUser> {
-    try {
-      // Validate input
-      const validatedCredentials = AdminLoginSchema.parse(credentials)
-
-      // For now, simulate admin login - will be replaced with real auth
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // Mock admin credentials
-      if (validatedCredentials.username === "admin" && validatedCredentials.password === "admin123") {
-        const adminUser = {
-          id: "admin-1",
-          username: "admin",
-          email: "admin@lootore.com",
-          role: "super_admin" as const,
-          permissions: ["manage_users", "manage_publishers", "manage_coupons", "view_analytics", "manage_admins"],
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString(),
-        }
-
-        return AdminUserSchema.parse(adminUser)
-      }
-
-      throw new AuthException(AuthErrorCode.UNAUTHORIZED, "Invalid admin credentials")
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new AuthException(AuthErrorCode.VALIDATION_ERROR, "Invalid input data", error.errors)
-      }
-      if (error instanceof AuthException) {
-        throw error
-      }
-      throw new AuthException(AuthErrorCode.NETWORK_ERROR, "Admin login failed", error)
-    }
-  }
-
-  async verifyAdminSession(): Promise<AdminUser | null> {
-    try {
-      // This will check admin session with real API
-      const response = await this.makeRequest<{ user: AdminUser }>("/verify-session")
-      return AdminUserSchema.parse(response.user)
-    } catch (error) {
-      return null
-    }
-  }
-
-  async logout(): Promise<void> {
-    try {
-      await this.makeRequest("/logout", { method: "POST" })
-    } catch (error) {
-      console.error("Admin logout failed:", error)
-    }
-  }
+  // Örnek bir admin-spesifik API çağrısı (eğer varsa)
+  // async getAdminDashboardStats(): Promise<any> {
+  //   return this.makeRequest("/dashboard-stats");
+  // }
 }
 
 export const adminService = new AdminService()

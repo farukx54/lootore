@@ -6,8 +6,8 @@ export default function NasilKazanilir() {
   return (
     <main className="flex min-h-screen flex-col overflow-hidden">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-black via-gray-900 to-black py-16 earn-points-hero-section">
-        <div className="absolute inset-0 bg-[url('/digital-weave.png')] bg-cover bg-center opacity-10 mix-blend-overlay max-h-full"></div>
+      <section className="relative bg-gradient-to-br from-black via-gray-900 to-black py-16 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/digital-weave.png')] bg-cover bg-center opacity-10 mix-blend-overlay"></div>
         <div className="absolute -bottom-48 -left-48 h-96 w-96 rounded-full bg-[#9146FF] opacity-20 blur-3xl"></div>
         <div className="absolute -top-48 -right-48 h-96 w-96 rounded-full bg-[#00FF00] opacity-10 blur-3xl"></div>
 

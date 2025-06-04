@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef, useCallback } from "react"
+import { useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,8 +35,6 @@ export default function ImageUploader({
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<boolean>(false)
-  const [platformUsername, setPlatformUsername] = useState<string>("")
-
   const fileInputRef = useRef<HTMLInputElement>(null)
   const maxSizeBytes = maxSizeMB * 1024 * 1024 // Convert MB to bytes
 
@@ -100,50 +98,6 @@ export default function ImageUploader({
     img.src = imageUrl
   }
 
-  const fetchPlatformImage = useCallback(
-    async (platform: "twitch" | "kick") => {
-      if (!platformUsername) {
-        setError(`Lütfen bir ${platform === "twitch" ? "Twitch" : "Kick"} kullanıcı adı girin.`)
-        return
-      }
-
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        // In a real implementation, you would make an API call to fetch the profile image
-        // For this example, we'll simulate the API call with a timeout
-
-        // This is a placeholder. In a real app, you would call your backend API
-        // which would then use the Twitch/Kick API to get the profile image
-        await new Promise((resolve) => setTimeout(resolve, 1500))
-
-        // Simulate different profile images based on platform
-        const mockImageUrl =
-          platform === "twitch"
-            ? `https://static-cdn.jtvnw.net/jtv_user_pictures/placeholder-profile_image-${platformUsername.toLowerCase()}.png`
-            : `https://kick-profile-images.s3.amazonaws.com/${platformUsername.toLowerCase()}.png`
-
-        // In a real app, you would use the actual URL returned from the API
-        setImageUrl(mockImageUrl)
-        onImageSelect({ url: mockImageUrl })
-        setSuccess(true)
-
-        // Reset success message after 3 seconds
-        setTimeout(() => {
-          setSuccess(false)
-        }, 3000)
-      } catch (err) {
-        setError(
-          `${platform === "twitch" ? "Twitch" : "Kick"} profil resmi alınamadı. Lütfen kullanıcı adını kontrol edin.`,
-        )
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [platformUsername, onImageSelect],
-  )
-
   const clearImage = () => {
     setImageUrl("")
     setImageFile(null)
@@ -160,10 +114,9 @@ export default function ImageUploader({
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="upload" value={selectedTab} onValueChange={setSelectedTab}>
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="upload">Dosya Yükle</TabsTrigger>
             <TabsTrigger value="url">URL Gir</TabsTrigger>
-            <TabsTrigger value="platform">Platform</TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-4">
@@ -210,42 +163,6 @@ export default function ImageUploader({
                 <Button onClick={handleUrlSubmit} disabled={isLoading} className="bg-[#9146FF] hover:bg-[#7a38d5]">
                   {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LinkIcon className="h-4 w-4 mr-2" />}
                   {isLoading ? "Yükleniyor..." : "Ekle"}
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="platform" className="space-y-4">
-            <div className="grid w-full items-center gap-4">
-              <div>
-                <Label htmlFor="platform-username">Platform Kullanıcı Adı</Label>
-                <div className="flex items-center gap-2 mt-1.5">
-                  <Input
-                    id="platform-username"
-                    placeholder="örn: pokimane"
-                    value={platformUsername}
-                    onChange={(e) => setPlatformUsername(e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => fetchPlatformImage("twitch")}
-                  disabled={isLoading || !platformUsername}
-                  className="flex-1 bg-[#9146FF] hover:bg-[#7a38d5]"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Twitch Profil Resmi Al
-                </Button>
-                <Button
-                  onClick={() => fetchPlatformImage("kick")}
-                  disabled={isLoading || !platformUsername}
-                  className="flex-1 bg-[#00FF00] hover:bg-[#00cc00] text-black"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Kick Profil Resmi Al
                 </Button>
               </div>
             </div>
