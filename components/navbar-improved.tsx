@@ -1,31 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import UserDropdown from "./user-dropdown"
 import { usePathname, useRouter } from "next/navigation"
 import MessagingDropdown from "./messaging-dropdown"
-import { useAuthStore } from "@/lib/stores/auth-store"
+import { useAuth } from "@/lib/auth-context"
 
-export default function Navbar() {
-  const { user, isLoggedIn, isLoading, login, logout, initialize } = useAuthStore()
+export default function NavbarImproved() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
-
-  // Initialize auth on component mount
-  useEffect(() => {
-    initialize()
-  }, [initialize])
+  const { user, isLoading, isLoggedIn, logout } = useAuth()
 
   const handleLogin = () => {
     router.push("/login")
   }
 
-  const handleLogout = async () => {
-    await logout()
+  const handleLogout = () => {
+    logout()
     router.push("/")
   }
 
@@ -33,11 +28,48 @@ export default function Navbar() {
     return pathname === path
   }
 
+  // Loading state için skeleton
+  if (isLoading) {
+    return (
+      <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/80 backdrop-blur-md">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex h-16 items-center justify-between gap-2 sm:gap-4">
+            <Link href="/" className="flex items-center">
+              <span className="text-xl sm:text-2xl font-extrabold">
+                <span className="bg-gradient-to-r from-[#9146FF] via-white to-[#00FF00] bg-clip-text text-transparent">
+                  LootOre
+                </span>
+              </span>
+            </Link>
+
+            <nav className="hidden md:flex md:items-center md:space-x-6 flex-1 justify-center">
+              <Link href="/" className="text-sm font-medium text-gray-400 hover:text-white">
+                Ana Sayfa
+              </Link>
+              <Link href="/nasil-kazanilir" className="text-sm font-medium text-gray-400 hover:text-white">
+                Nasıl Kazanılır
+              </Link>
+              <Link href="/yayinlar" className="text-sm font-medium text-gray-400 hover:text-white">
+                Yayınlar
+              </Link>
+              <Link href="/oduller" className="text-sm font-medium text-gray-400 hover:text-white">
+                Ödüller
+              </Link>
+            </nav>
+
+            <div className="flex items-center justify-end w-auto sm:w-[120px] md:w-[180px]">
+              <div className="h-8 w-20 bg-gray-700 animate-pulse rounded"></div>
+            </div>
+          </div>
+        </div>
+      </header>
+    )
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-gray-800 bg-black/80 backdrop-blur-md">
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex h-16 items-center justify-between gap-2 sm:gap-4">
-          {/* Logo - Make it smaller on mobile */}
           <Link href="/" className="flex items-center">
             <span className="text-xl sm:text-2xl font-extrabold">
               <span className="bg-gradient-to-r from-[#9146FF] via-white to-[#00FF00] bg-clip-text text-transparent">
@@ -46,7 +78,6 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden md:flex md:items-center md:space-x-6 flex-1 justify-center">
             <Link
               href="/"
@@ -82,14 +113,11 @@ export default function Navbar() {
             </Link>
           </nav>
 
-          {/* Adjust the auth container width */}
           <div className="flex items-center justify-end w-auto sm:w-[120px] md:w-[180px]">
-            {isLoading ? (
-              <div className="h-8 w-8 rounded-full bg-gray-800 animate-pulse"></div>
-            ) : isLoggedIn && user ? (
+            {isLoggedIn && user ? (
               <div className="flex items-center gap-1 sm:gap-2">
-                {isLoggedIn && <MessagingDropdown />}
-                <UserDropdown onLogout={handleLogout} user={user} />
+                <MessagingDropdown />
+                <UserDropdown onLogout={handleLogout} userProfile={user} />
               </div>
             ) : (
               <div className="hidden md:block">
@@ -99,7 +127,6 @@ export default function Navbar() {
               </div>
             )}
 
-            {/* Increase spacing for mobile menu button */}
             <button
               className="ml-2 sm:ml-4 md:hidden p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-[#9146FF] focus:ring-offset-2 focus:ring-offset-black"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -175,15 +202,17 @@ export default function Navbar() {
                 </Link>
               </li>
               {!isLoggedIn && (
-                <Button
-                  onClick={() => {
-                    handleLogin()
-                    setMobileMenuOpen(false)
-                  }}
-                  className="mt-2 w-full bg-[#9146FF] hover:bg-[#7a38d5]"
-                >
-                  Giriş Yap
-                </Button>
+                <li className="pt-2">
+                  <Button
+                    onClick={() => {
+                      handleLogin()
+                      setMobileMenuOpen(false)
+                    }}
+                    className="w-full bg-[#9146FF] hover:bg-[#7a38d5]"
+                  >
+                    Giriş Yap
+                  </Button>
+                </li>
               )}
             </ul>
           </nav>

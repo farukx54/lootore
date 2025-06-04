@@ -1,73 +1,81 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  authenticateWithTwitch,
-  authenticateWithKick,
-  saveUserSession,
-  isFirstTimeLogin,
-  type UserProfile,
-} from "@/lib/auth"
-import UsernameModal from "@/components/username-modal"
+import { signInWithTwitch } from "@/lib/supabase/auth-helpers"
 import { useToast } from "@/hooks/use-toast"
+import { Loader2 } from "lucide-react"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [provider, setProvider] = useState<"twitch" | "kick" | null>(null)
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
-  const [showUsernameModal, setShowUsernameModal] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
 
-  useEffect(() => {
-    // Kullanıcı zaten giriş yapmışsa ana sayfaya yönlendir
-    const isLoggedIn = localStorage.getItem("isLoggedIn") === "true"
-    if (isLoggedIn) {
-      router.push("/")
-    }
-  }, [router])
+  // Get redirect URL from query params
+  const redirectUrl = searchParams.get("redirect") || "/"
 
-  const handleAuth = async (authProvider: "twitch" | "kick") => {
+  useEffect(() => {
+    // Check if user is already logged in
+    const checkSession = async () => {
+      const { createClient } = await import("@/lib/supabase/auth-helpers")
+      const supabase = createClient()
+      const { data } = await supabase.auth.getSession()
+
+      if (data.session) {
+        router.push(redirectUrl)
+      }
+    }
+
+    checkSession()
+  }, [router, redirectUrl])
+
+  const handleTwitchAuth = async () => {
     setIsLoading(true)
-    setProvider(authProvider)
+    setProvider("twitch")
 
     try {
-      let profile: UserProfile
+      const { data, error } = await signInWithTwitch()
 
-      if (authProvider === "twitch") {
-        profile = await authenticateWithTwitch()
-      } else {
-        profile = await authenticateWithKick()
+      if (error) {
+        throw error
       }
 
-      setUserProfile(profile)
+      // The OAuth flow will redirect the user, so we don't need to do anything else here
+    } catch (error) {
+      console.error("Twitch auth error:", error)
+      toast({
+        title: "Giriş hatası",
+        description: "Twitch ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+    }
+  }
 
-      // İlk kez giriş yapıyorsa kullanıcı adı oluşturma modalını göster
-      if (isFirstTimeLogin(profile)) {
-        setShowUsernameModal(true)
-      } else {
-        // Kullanıcı adı zaten varsa oturumu kaydet ve ana sayfaya yönlendir
-        saveUserSession(profile)
-        router.push("/")
-      }
+  const handleKickAuth = async () => {
+    setIsLoading(true)
+    setProvider("kick")
+
+    try {
+      // Kick auth will be implemented later
+      toast({
+        title: "Geliştirme aşamasında",
+        description: "Kick ile giriş şu anda geliştirme aşamasındadır.",
+        variant: "default",
+      })
     } catch (error) {
       toast({
         title: "Giriş hatası",
-        description: "Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.",
+        description: "Kick ile giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleUsernameComplete = (updatedProfile: UserProfile) => {
-    saveUserSession(updatedProfile)
-    setShowUsernameModal(false)
-    router.push("/")
   }
 
   return (
@@ -85,12 +93,15 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
-            onClick={() => handleAuth("twitch")}
+            onClick={handleTwitchAuth}
             disabled={isLoading}
             className="w-full bg-[#9146FF] hover:bg-[#7a38d5] py-6 text-lg"
           >
             {isLoading && provider === "twitch" ? (
-              "Giriş yapılıyor..."
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Giriş yapılıyor...
+              </span>
             ) : (
               <>
                 <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" fill="#FFFFFF">
@@ -102,12 +113,15 @@ export default function LoginPage() {
           </Button>
 
           <Button
-            onClick={() => handleAuth("kick")}
+            onClick={handleKickAuth}
             disabled={isLoading}
             className="w-full bg-black text-[#00FF00] border border-[#00FF00] hover:bg-[#00FF00]/10 py-6 text-lg"
           >
             {isLoading && provider === "kick" ? (
-              "Giriş yapılıyor..."
+              <span className="flex items-center">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Giriş yapılıyor...
+              </span>
             ) : (
               <>
                 <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" fill="#00FF00">
@@ -133,10 +147,6 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
-
-      {userProfile && (
-        <UsernameModal isOpen={showUsernameModal} userProfile={userProfile} onComplete={handleUsernameComplete} />
-      )}
     </div>
   )
 }

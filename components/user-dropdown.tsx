@@ -15,24 +15,25 @@ import UserPanel from "./user-panel"
 import { Button } from "./ui/button"
 import { Dialog, DialogContent } from "./ui/dialog"
 import Link from "next/link"
-import type { UserProfile } from "@/lib/auth"
 import { Badge } from "./ui/badge"
+import type { Database } from "@/lib/supabase/types"
+
+type UserProfile = Database["public"]["Tables"]["users"]["Row"]
 
 interface UserDropdownProps {
   onLogout: () => void
-  orePoints?: number
-  userProfile: UserProfile | null
+  user: UserProfile
 }
 
-export default function UserDropdown({ onLogout, orePoints = 15000, userProfile }: UserDropdownProps) {
+export default function UserDropdown({ onLogout, user }: UserDropdownProps) {
   const [isUserPanelOpen, setIsUserPanelOpen] = useState(false)
 
-  // Kullanıcı adını veya varsayılan görünen adı al
-  const displayName = userProfile?.username || userProfile?.displayName || "Kullanıcı"
+  // Get display name
+  const displayName = user.username || user.display_name || "Kullanıcı"
 
-  // Kullanıcının hangi platformdan giriş yaptığını belirle
-  const providerName = userProfile?.provider === "twitch" ? "Twitch" : "Kick"
-  const providerColor = userProfile?.provider === "twitch" ? "#9146FF" : "#00FF00"
+  // Get provider info
+  const providerName = user.provider === "twitch" ? "Twitch" : "Kick"
+  const providerColor = user.provider === "twitch" ? "#9146FF" : "#00FF00"
 
   return (
     <div className="flex items-center gap-2">
@@ -40,7 +41,7 @@ export default function UserDropdown({ onLogout, orePoints = 15000, userProfile 
         <Link href="/profile">
           <Button variant="ghost" className="flex items-center gap-2 text-white hover:bg-gray-800 w-full justify-start">
             <Avatar className="h-8 w-8 flex-shrink-0">
-              <AvatarImage src={userProfile?.avatar || "/abstract-user-icon.png"} alt="Kullanıcı" />
+              <AvatarImage src={user.avatar || "/abstract-user-icon.png"} alt="Kullanıcı" />
               <AvatarFallback>{displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <span className="hidden text-sm font-medium sm:inline-block truncate">{displayName}</span>
@@ -48,7 +49,7 @@ export default function UserDropdown({ onLogout, orePoints = 15000, userProfile 
           </Button>
         </Link>
         <DialogContent className="max-w-4xl w-[95vw] bg-gray-900 p-0 sm:rounded-2xl fixed-width-container">
-          <UserPanel onClose={() => setIsUserPanelOpen(false)} orePoints={orePoints} userProfile={userProfile} />
+          <UserPanel onClose={() => setIsUserPanelOpen(false)} user={user} />
         </DialogContent>
       </Dialog>
 
@@ -61,7 +62,7 @@ export default function UserDropdown({ onLogout, orePoints = 15000, userProfile 
         <DropdownMenuContent align="end" className="w-56 bg-gray-900 text-white">
           <DropdownMenuLabel className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={userProfile?.avatar || "/abstract-user-icon.png"} alt="Kullanıcı" />
+              <AvatarImage src={user.avatar || "/abstract-user-icon.png"} alt="Kullanıcı" />
               <AvatarFallback>{displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
@@ -72,7 +73,7 @@ export default function UserDropdown({ onLogout, orePoints = 15000, userProfile 
                 </Badge>
               </div>
               <p className="text-xs bg-gradient-to-r from-[#9146FF] to-[#00FF00] bg-clip-text text-transparent font-semibold">
-                {orePoints.toLocaleString()} Ore Points
+                {user.ore_points?.toLocaleString() || 0} Ore Points
               </p>
             </div>
           </DropdownMenuLabel>
