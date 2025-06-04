@@ -413,7 +413,7 @@ section {
 }
 
 /* Specific fix for digital-weave.png background */
-.earn-points-hero-section .bg-\[url$$\'/digital-weave.png\'$$\] {\
+.earn-points-hero-section .bg-\[url$$\'\/digital-weave\.png\'$$\] {\
   background-size: cover;
   background-position: center;
   max-height: 100%;
@@ -698,22 +698,6 @@ section > .container {
   z-index: 2;
 }
 
-/* 
-Add
-  these
-  styles
-  at
-  the
-  end
-  of
-  the
-  file
-  to
-  ensure
-  consistent
-  navbar
-  layout 
-*/
 /* Navbar layout consistency fixes */
 .navbar-container {
   position: relative;
