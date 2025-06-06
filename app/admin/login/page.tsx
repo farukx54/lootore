@@ -33,9 +33,9 @@ export default function AdminLoginPage() {
   useEffect(() => {
     // Eğer kullanıcı zaten admin olarak giriş yapmışsa ve yükleme durumu yoksa /admin sayfasına yönlendir
     if (isAdminLoggedIn && !isLoading) {
-      router.push("/admin")
+      window.location.href = "/admin"; // Tam sayfa yenileme ile yönlendirme
     }
-  }, [isAdminLoggedIn, isLoading, router])
+  }, [isAdminLoggedIn, isLoading])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
