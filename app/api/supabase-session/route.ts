@@ -5,6 +5,10 @@ import { Database } from "@/lib/supabase/types"
 
 export async function GET(req: NextRequest) {
   try {
+    // Cookie'yi logla
+    const cookieHeader = req.headers.get("cookie");
+    console.log("API route'a gelen cookie:", cookieHeader);
+
     const supabase = createServerComponentClient<Database>({ cookies })
     const { data, error } = await supabase.auth.getSession()
     if (error) return Response.json({ error }, { status: 500 })
