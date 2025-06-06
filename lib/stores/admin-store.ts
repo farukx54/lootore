@@ -177,6 +177,8 @@ export const useAdminStore = create<AdminStore>()(
               isLoading: false,
               sessionChecked: true,
             })
+            // Persisted state'i de sıfırla
+            localStorage.setItem("admin-storage", JSON.stringify({ isAdminLoggedIn: false, adminUser: null }))
             return
           }
 

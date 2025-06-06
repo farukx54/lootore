@@ -20,6 +20,11 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   const [isChecking, setIsChecking] = useState(true)
 
+  // Uygulama ilk açıldığında session check yap
+  useEffect(() => {
+    checkAdminSession();
+  }, [checkAdminSession]);
+
   useEffect(() => {
     const performChecks = async () => {
       setIsChecking(true)
