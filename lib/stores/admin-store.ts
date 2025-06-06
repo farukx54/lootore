@@ -42,8 +42,19 @@ export const useAdminStore = create<AdminStore>()(
 
           if (error) {
             console.error("Admin login error:", error)
+            let errorMessage = "Giriş bilgileri hatalı. Lütfen e-posta ve şifrenizi kontrol edin."
+
+            // Supabase'den gelen hata mesajlarını daha anlaşılır hale getir
+            if (error.message === "Email logins are disabled") {
+              errorMessage = "Email ile giriş devre dışı. Lütfen sistem yöneticisi ile iletişime geçin."
+            } else if (error.message === "Invalid login credentials") {
+              errorMessage = "Geçersiz giriş bilgileri. Lütfen e-posta ve şifrenizi kontrol edin."
+            } else if (error.message.includes("rate limit")) {
+              errorMessage = "Çok fazla başarısız deneme. Lütfen bir süre bekleyin."
+            }
+
             set({
-              error: "Giriş bilgileri hatalı. Lütfen e-posta ve şifrenizi kontrol edin.",
+              error: errorMessage,
               isSubmitting: false,
             })
             return
@@ -61,12 +72,19 @@ export const useAdminStore = create<AdminStore>()(
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("is_admin")
-            .eq("id", data.user.id)
+            .eq("user_id", data.user.id)
             .single()
 
-          if (profileError || !profile || !profile.is_admin) {
-            console.error("Admin role check failed:", profileError)
+          if (profileError) {
+            console.error("Profile fetch error:", profileError)
+            set({
+              error: "Kullanıcı bilgileri alınamadı. Lütfen tekrar deneyin.",
+              isSubmitting: false,
+            })
+            return
+          }
 
+          if (!profile || !profile.is_admin) {
             // Admin değilse oturumu kapat
             await supabase.auth.signOut()
 
@@ -146,7 +164,7 @@ export const useAdminStore = create<AdminStore>()(
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("is_admin")
-            .eq("id", session.user.id)
+            .eq("user_id", session.user.id)
             .single()
 
           if (profileError || !profile || !profile.is_admin) {
