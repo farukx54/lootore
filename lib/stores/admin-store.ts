@@ -2,6 +2,8 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { supabase } from "@/lib/supabase/client"
 import type { AdminPublisher, AdminCoupon } from "@/lib/types/admin"
+import { StateCreator, StoreApi } from "zustand"
+import { PersistOptions } from "zustand/middleware"
 
 interface AdminState {
   isAdminLoggedIn: boolean
@@ -9,6 +11,7 @@ interface AdminState {
   error: string | null
   isLoading: boolean
   isSubmitting: boolean
+  sessionChecked: boolean
   publishers: AdminPublisher[]
   coupons: AdminCoupon[]
 }
@@ -34,18 +37,19 @@ type AdminStore = AdminState & AdminActions
 
 export const useAdminStore = create<AdminStore>()(
   persist(
-    (set, get) => ({
+    (set: StoreApi<AdminStore>["setState"], get: StoreApi<AdminStore>["getState"]) => ({
       // Initial state
       isAdminLoggedIn: false,
       adminUser: null,
       error: null,
       isLoading: false,
       isSubmitting: false,
+      sessionChecked: false,
       publishers: [],
       coupons: [],
 
       // Actions
-      adminLogin: async (credentials) => {
+      adminLogin: async (credentials: { username: string; password: string }) => {
         try {
           set({ isSubmitting: true, error: null })
 
@@ -171,6 +175,7 @@ export const useAdminStore = create<AdminStore>()(
               isAdminLoggedIn: false,
               adminUser: null,
               isLoading: false,
+              sessionChecked: true,
             })
             return
           }
@@ -189,6 +194,7 @@ export const useAdminStore = create<AdminStore>()(
               isAdminLoggedIn: false,
               adminUser: null,
               isLoading: false,
+              sessionChecked: true,
             })
             return
           }
@@ -198,6 +204,7 @@ export const useAdminStore = create<AdminStore>()(
             isAdminLoggedIn: true,
             adminUser: session.user,
             isLoading: false,
+            sessionChecked: true,
           })
         } catch (error) {
           console.error("Unexpected session check error:", error)
@@ -205,6 +212,7 @@ export const useAdminStore = create<AdminStore>()(
             isAdminLoggedIn: false,
             adminUser: null,
             isLoading: false,
+            sessionChecked: true,
           })
         }
       },
@@ -212,8 +220,17 @@ export const useAdminStore = create<AdminStore>()(
       // Publisher actions
       fetchAdminPublishers: async () => {
         try {
+          // Session ve admin kontrolü
+          const { isAdminLoggedIn, sessionChecked } = get()
+          if (!sessionChecked) {
+            // Session kontrolü tamamlanmadan fetch yapılmasın
+            return
+          }
+          if (!isAdminLoggedIn) {
+            set({ error: "Admin girişi yapılmadan yayıncılar getirilemez." })
+            return
+          }
           set({ isLoading: true, error: null })
-          console.log("Fetching publishers...") // Test için log ekledim
           const { data, error } = await supabase.from("publishers").select("*").order("created_at", { ascending: false })
 
           if (error) throw error
@@ -224,13 +241,13 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      addPublisher: async (publisher) => {
+      addPublisher: async (publisher: Omit<AdminPublisher, "id" | "created_at" | "updated_at">) => {
         try {
           set({ isSubmitting: true, error: null })
           const { data, error } = await supabase.from("publishers").insert(publisher).select().single()
 
           if (error) throw error
-          set((state) => ({ publishers: [data, ...state.publishers], isSubmitting: false }))
+          set((state: AdminStore) => ({ publishers: [data, ...state.publishers], isSubmitting: false }))
           return true
         } catch (error: any) {
           console.error("Add publisher error:", error)
@@ -239,7 +256,7 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      updatePublisher: async (id, publisher) => {
+      updatePublisher: async (id: string, publisher: Partial<AdminPublisher>) => {
         try {
           set({ isSubmitting: true, error: null })
           const { data, error } = await supabase
@@ -250,8 +267,8 @@ export const useAdminStore = create<AdminStore>()(
             .single()
 
           if (error) throw error
-          set((state) => ({
-            publishers: state.publishers.map((p) => (p.id === id ? data : p)),
+          set((state: AdminStore) => ({
+            publishers: state.publishers.map((p: AdminPublisher) => (p.id === id ? data : p)),
             isSubmitting: false,
           }))
           return true
@@ -262,14 +279,14 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      deletePublisher: async (id) => {
+      deletePublisher: async (id: string) => {
         try {
           set({ isSubmitting: true, error: null })
           const { error } = await supabase.from("publishers").delete().eq("id", id)
 
           if (error) throw error
-          set((state) => ({
-            publishers: state.publishers.filter((p) => p.id !== id),
+          set((state: AdminStore) => ({
+            publishers: state.publishers.filter((p: AdminPublisher) => p.id !== id),
             isSubmitting: false,
           }))
           return true
@@ -294,13 +311,13 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      addCoupon: async (coupon) => {
+      addCoupon: async (coupon: Omit<AdminCoupon, "id" | "created_at" | "updated_at">) => {
         try {
           set({ isSubmitting: true, error: null })
           const { data, error } = await supabase.from("coupons").insert(coupon).select().single()
 
           if (error) throw error
-          set((state) => ({ coupons: [data, ...state.coupons], isSubmitting: false }))
+          set((state: AdminStore) => ({ coupons: [data, ...state.coupons], isSubmitting: false }))
           return true
         } catch (error: any) {
           console.error("Add coupon error:", error)
@@ -309,14 +326,14 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      updateCoupon: async (id, coupon) => {
+      updateCoupon: async (id: string, coupon: Partial<AdminCoupon>) => {
         try {
           set({ isSubmitting: true, error: null })
           const { data, error } = await supabase.from("coupons").update(coupon).eq("id", id).select().single()
 
           if (error) throw error
-          set((state) => ({
-            coupons: state.coupons.map((c) => (c.id === id ? data : c)),
+          set((state: AdminStore) => ({
+            coupons: state.coupons.map((c: AdminCoupon) => (c.id === id ? data : c)),
             isSubmitting: false,
           }))
           return true
@@ -327,14 +344,14 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      deleteCoupon: async (id) => {
+      deleteCoupon: async (id: string) => {
         try {
           set({ isSubmitting: true, error: null })
           const { error } = await supabase.from("coupons").delete().eq("id", id)
 
           if (error) throw error
-          set((state) => ({
-            coupons: state.coupons.filter((c) => c.id !== id),
+          set((state: AdminStore) => ({
+            coupons: state.coupons.filter((c: AdminCoupon) => c.id !== id),
             isSubmitting: false,
           }))
           return true
