@@ -213,6 +213,7 @@ export const useAdminStore = create<AdminStore>()(
       fetchAdminPublishers: async () => {
         try {
           set({ isLoading: true, error: null })
+          console.log("Fetching publishers...") // Test için log ekledim
           const { data, error } = await supabase.from("publishers").select("*").order("created_at", { ascending: false })
 
           if (error) throw error
