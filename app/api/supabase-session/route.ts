@@ -12,4 +12,4 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : error }, { status: 500 })
   }
-} 
+}
