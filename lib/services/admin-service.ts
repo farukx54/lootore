@@ -12,11 +12,14 @@ class AdminService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     // Bu fonksiyon, admin-spesifik API endpoint'lerine istek atmak için kullanılabilir.
     // Örnek: /api/admin/some-action
+    const isExternal =
+      endpoint.includes("www.lootore.com") || endpoint.includes("test-supabase")
     const response = await fetch(`/api/admin${endpoint}`, {
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
       },
+      credentials: isExternal ? "include" : options.credentials,
       ...options,
     })
 

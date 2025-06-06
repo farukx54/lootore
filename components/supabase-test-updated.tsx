@@ -1,3 +1,5 @@
+/// <reference types="node" />
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -12,6 +14,16 @@ interface TestResult {
   status: "success" | "error" | "warning" | "pending"
   message: string
   details?: string
+}
+
+// Yardımcı fonksiyon: fetchWithCredentials
+function fetchWithCredentials(input: RequestInfo | URL, init: RequestInit = {}) {
+  const url = typeof input === "string" ? input : input.toString()
+  const isExternal = url.includes("www.lootore.com") || url.includes("test-supabase")
+  return fetch(input, {
+    ...init,
+    credentials: isExternal ? "include" : init.credentials,
+  })
 }
 
 export default function SupabaseTestUpdated() {
@@ -47,7 +59,7 @@ export default function SupabaseTestUpdated() {
         return false
       }
 
-      const response = await fetch(`${supabaseUrl}/rest/v1/`, {
+      const response = await fetchWithCredentials(`${supabaseUrl}/rest/v1/`, {
         headers: {
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${supabaseAnonKey}`,
@@ -91,7 +103,7 @@ export default function SupabaseTestUpdated() {
 
       for (const table of requiredTables) {
         try {
-          const response = await fetch(`${supabaseUrl}/rest/v1/${table.name}?select=count&limit=1`, {
+          const response = await fetchWithCredentials(`${supabaseUrl}/rest/v1/${table.name}?select=count&limit=1`, {
             headers: {
               apikey: supabaseAnonKey!,
               Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -157,7 +169,7 @@ export default function SupabaseTestUpdated() {
 
       for (const table of testTables) {
         try {
-          const response = await fetch(`${supabaseUrl}/rest/v1/${table}?select=*&limit=1`, {
+          const response = await fetchWithCredentials(`${supabaseUrl}/rest/v1/${table}?select=*&limit=1`, {
             headers: {
               apikey: supabaseAnonKey!,
               Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -208,7 +220,7 @@ export default function SupabaseTestUpdated() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-      const authResponse = await fetch(`${supabaseUrl}/auth/v1/settings`, {
+      const authResponse = await fetchWithCredentials(`${supabaseUrl}/auth/v1/settings`, {
         headers: {
           apikey: supabaseAnonKey!,
           Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -263,7 +275,7 @@ export default function SupabaseTestUpdated() {
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
       // Test publishers data
-      const publishersResponse = await fetch(`${supabaseUrl}/rest/v1/publishers?select=count`, {
+      const publishersResponse = await fetchWithCredentials(`${supabaseUrl}/rest/v1/publishers?select=count`, {
         headers: {
           apikey: supabaseAnonKey!,
           Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -271,7 +283,7 @@ export default function SupabaseTestUpdated() {
       })
 
       // Test coupons data
-      const couponsResponse = await fetch(`${supabaseUrl}/rest/v1/coupons?select=count`, {
+      const couponsResponse = await fetchWithCredentials(`${supabaseUrl}/rest/v1/coupons?select=count`, {
         headers: {
           apikey: supabaseAnonKey!,
           Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -289,7 +301,7 @@ export default function SupabaseTestUpdated() {
 
       if (couponsResponse.ok) {
         const couponsData = await couponsResponse.json()
-        dataResults.push(`🎁 Coupons: ${couponsData.length || 0} kayıt`)
+        dataResults.push(`�� Coupons: ${couponsData.length || 0} kayıt`)
       } else {
         dataResults.push(`🎁 Coupons: Erişim hatası (${couponsResponse.status})`)
       }
@@ -312,7 +324,7 @@ export default function SupabaseTestUpdated() {
     updateTestResult("session-token", "pending", "Supabase oturumu ve token kontrol ediliyor...")
     try {
       // Supabase JS client ile session kontrolü (client-side)
-      const res = await fetch("/api/supabase-session")
+      const res = await fetchWithCredentials("/api/supabase-session")
       const data = await res.json()
       if (data.session) {
         updateTestResult(
@@ -336,7 +348,7 @@ export default function SupabaseTestUpdated() {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
       // Insert
-      const insertRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test`, {
+      const insertRes = await fetchWithCredentials(`${supabaseUrl}/rest/v1/diagnostics_test`, {
         method: "POST",
         headers: {
           apikey: supabaseAnonKey!,
@@ -346,7 +358,7 @@ export default function SupabaseTestUpdated() {
         body: JSON.stringify({ test_value: "test", created_at: new Date().toISOString() }),
       })
       // Select
-      const selectRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test?select=*`, {
+      const selectRes = await fetchWithCredentials(`${supabaseUrl}/rest/v1/diagnostics_test?select=*`, {
         headers: {
           apikey: supabaseAnonKey!,
           Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -358,7 +370,7 @@ export default function SupabaseTestUpdated() {
         const rows = await selectRes.json()
         if (rows.length > 0) {
           const id = rows[0].id
-          updateRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test?id=eq.${id}`, {
+          updateRes = await fetchWithCredentials(`${supabaseUrl}/rest/v1/diagnostics_test?id=eq.${id}`, {
             method: "PATCH",
             headers: {
               apikey: supabaseAnonKey!,
@@ -368,7 +380,7 @@ export default function SupabaseTestUpdated() {
             body: JSON.stringify({ test_value: "updated" }),
           })
           // Delete
-          deleteRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test?id=eq.${id}`, {
+          deleteRes = await fetchWithCredentials(`${supabaseUrl}/rest/v1/diagnostics_test?id=eq.${id}`, {
             method: "DELETE",
             headers: {
               apikey: supabaseAnonKey!,
@@ -399,7 +411,7 @@ export default function SupabaseTestUpdated() {
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-      const res = await fetch(`${supabaseUrl}/rest/v1/publishers?select=*`, {
+      const res = await fetchWithCredentials(`${supabaseUrl}/rest/v1/publishers?select=*`, {
         headers: {
           apikey: supabaseAnonKey!,
           Authorization: `Bearer ${supabaseAnonKey!}`,
@@ -422,7 +434,7 @@ export default function SupabaseTestUpdated() {
   const testServerAPI = async () => {
     updateTestResult("server-api", "pending", "Sunucu tarafı Supabase bağlantısı test ediliyor...")
     try {
-      const res = await fetch("/api/supabase-server-test")
+      const res = await fetchWithCredentials("/api/supabase-server-test")
       const data = await res.json()
       if (data.success) {
         updateTestResult("server-api", "success", "Sunucu tarafı bağlantı başarılı", JSON.stringify(data, null, 2))
@@ -438,8 +450,8 @@ export default function SupabaseTestUpdated() {
   const testStatusAPIs = async () => {
     updateTestResult("status-api", "pending", "Vercel ve Supabase status API'leri kontrol ediliyor...")
     try {
-      const vercelRes = await fetch("https://status.vercel.com/api/v2/status.json")
-      const supabaseRes = await fetch("https://status.supabase.com/api/v2/status.json")
+      const vercelRes = await fetchWithCredentials("https://status.vercel.com/api/v2/status.json")
+      const supabaseRes = await fetchWithCredentials("https://status.supabase.com/api/v2/status.json")
       const vercel = await vercelRes.json()
       const supabase = await supabaseRes.json()
       const details = `Vercel: ${vercel.status.description}\nSupabase: ${supabase.status.description}`

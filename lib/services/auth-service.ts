@@ -6,11 +6,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/a
 class AuthService {
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     try {
+      const isExternal =
+        API_BASE_URL.includes("www.lootore.com") || API_BASE_URL.includes("test-supabase")
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         headers: {
           "Content-Type": "application/json",
           ...options.headers,
         },
+        credentials: isExternal ? "include" : options.credentials,
         ...options,
       })
 
