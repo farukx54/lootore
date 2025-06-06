@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -307,19 +307,163 @@ export default function SupabaseTestUpdated() {
     }
   }
 
+  // Yeni: Session & Token Testi
+  const testSessionToken = async () => {
+    updateTestResult("session-token", "pending", "Supabase oturumu ve token kontrol ediliyor...")
+    try {
+      // Supabase JS client ile session kontrolü (client-side)
+      const res = await fetch("/api/supabase-session")
+      const data = await res.json()
+      if (data.session) {
+        updateTestResult(
+          "session-token",
+          "success",
+          `Token geçerli. Kullanıcı: ${data.session.user?.email || data.session.user?.id}`,
+          `Kalan süre: ${data.session.expires_in || "bilinmiyor"} sn\nToken: ${data.session.access_token?.slice(0, 16)}...`
+        )
+      } else {
+        updateTestResult("session-token", "error", "Geçerli oturum bulunamadı.", JSON.stringify(data, null, 2))
+      }
+    } catch (error) {
+      updateTestResult("session-token", "error", "Session/token kontrol hatası", error instanceof Error ? error.message : "Bilinmeyen hata")
+    }
+  }
+
+  // Yeni: CRUD Testi (diagnostics_test tablosu)
+  const testCRUD = async () => {
+    updateTestResult("crud-test", "pending", "CRUD işlemleri test ediliyor...")
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      // Insert
+      const insertRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test`, {
+        method: "POST",
+        headers: {
+          apikey: supabaseAnonKey!,
+          Authorization: `Bearer ${supabaseAnonKey!}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ test_value: "test", created_at: new Date().toISOString() }),
+      })
+      // Select
+      const selectRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test?select=*`, {
+        headers: {
+          apikey: supabaseAnonKey!,
+          Authorization: `Bearer ${supabaseAnonKey!}`,
+        },
+      })
+      // Update
+      let updateRes, deleteRes
+      if (selectRes.ok) {
+        const rows = await selectRes.json()
+        if (rows.length > 0) {
+          const id = rows[0].id
+          updateRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test?id=eq.${id}`, {
+            method: "PATCH",
+            headers: {
+              apikey: supabaseAnonKey!,
+              Authorization: `Bearer ${supabaseAnonKey!}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ test_value: "updated" }),
+          })
+          // Delete
+          deleteRes = await fetch(`${supabaseUrl}/rest/v1/diagnostics_test?id=eq.${id}`, {
+            method: "DELETE",
+            headers: {
+              apikey: supabaseAnonKey!,
+              Authorization: `Bearer ${supabaseAnonKey!}`,
+            },
+          })
+        }
+      }
+      const details = [
+        `Insert: ${insertRes.status}`,
+        `Select: ${selectRes.status}`,
+        `Update: ${updateRes?.status ?? "-"}`,
+        `Delete: ${deleteRes?.status ?? "-"}`,
+      ].join("\n")
+      if (insertRes.ok && selectRes.ok && updateRes?.ok && deleteRes?.ok) {
+        updateTestResult("crud-test", "success", "CRUD işlemleri başarılı", details)
+      } else {
+        updateTestResult("crud-test", "warning", "CRUD işlemlerinde hata/uyarı", details)
+      }
+    } catch (error) {
+      updateTestResult("crud-test", "error", "CRUD test hatası", error instanceof Error ? error.message : "Bilinmeyen hata")
+    }
+  }
+
+  // Yeni: Policy Detay Testi (örnek tablo: publishers)
+  const testPolicyDetails = async () => {
+    updateTestResult("policy-details", "pending", "Policy detayları test ediliyor...")
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      const res = await fetch(`${supabaseUrl}/rest/v1/publishers?select=*`, {
+        headers: {
+          apikey: supabaseAnonKey!,
+          Authorization: `Bearer ${supabaseAnonKey!}`,
+        },
+      })
+      if (res.status === 401 || res.status === 403) {
+        const text = await res.text()
+        updateTestResult("policy-details", "warning", `Policy engeli: ${res.status}`, text)
+      } else if (res.ok) {
+        updateTestResult("policy-details", "success", "Policy engeli yok, erişim başarılı")
+      } else {
+        updateTestResult("policy-details", "error", `Beklenmeyen hata: ${res.status}`)
+      }
+    } catch (error) {
+      updateTestResult("policy-details", "error", "Policy detay testi hatası", error instanceof Error ? error.message : "Bilinmeyen hata")
+    }
+  }
+
+  // Yeni: Sunucu Tarafı API Testi
+  const testServerAPI = async () => {
+    updateTestResult("server-api", "pending", "Sunucu tarafı Supabase bağlantısı test ediliyor...")
+    try {
+      const res = await fetch("/api/supabase-server-test")
+      const data = await res.json()
+      if (data.success) {
+        updateTestResult("server-api", "success", "Sunucu tarafı bağlantı başarılı", JSON.stringify(data, null, 2))
+      } else {
+        updateTestResult("server-api", "error", "Sunucu tarafı bağlantı hatası", JSON.stringify(data, null, 2))
+      }
+    } catch (error) {
+      updateTestResult("server-api", "error", "Sunucu tarafı test hatası", error instanceof Error ? error.message : "Bilinmeyen hata")
+    }
+  }
+
+  // Yeni: Vercel/Supabase Status API Testi
+  const testStatusAPIs = async () => {
+    updateTestResult("status-api", "pending", "Vercel ve Supabase status API'leri kontrol ediliyor...")
+    try {
+      const vercelRes = await fetch("https://status.vercel.com/api/v2/status.json")
+      const supabaseRes = await fetch("https://status.supabase.com/api/v2/status.json")
+      const vercel = await vercelRes.json()
+      const supabase = await supabaseRes.json()
+      const details = `Vercel: ${vercel.status.description}\nSupabase: ${supabase.status.description}`
+      updateTestResult("status-api", "success", "Status API'leri başarılı", details)
+    } catch (error) {
+      updateTestResult("status-api", "error", "Status API testi hatası", error instanceof Error ? error.message : "Bilinmeyen hata")
+    }
+  }
+
   const runAllTests = async () => {
     setIsRunning(true)
     setTestResults([])
-
-    // Run tests sequentially
     const connectionOk = await testSupabaseConnection()
     if (connectionOk) {
       await testDatabaseTables()
       await testRLSPolicies()
       await testAuthProviders()
       await testSampleData()
+      await testSessionToken()
+      await testCRUD()
+      await testPolicyDetails()
+      await testServerAPI()
+      await testStatusAPIs()
     }
-
     setIsRunning(false)
   }
 
