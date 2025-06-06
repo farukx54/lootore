@@ -6,65 +6,46 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-
-    /* Light mode primary - canlı bir mor */
-    --primary: 260 70% 50%; /* Örnek: Canlı bir mor */
+    --primary: 260 70% 50%;
     --primary-foreground: 210 40% 98%;
-
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%; /* Ring rengi primary ile uyumlu olabilir */
-
+    --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%; /* Koyu gri/siyah */
-    --foreground: 210 40% 98%; /* Beyaz */
-
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    /* Dark mode primary - daha canlı bir mor */
-    --primary: 250 80% 65%; /* Örnek: Koyu temada daha parlak bir mor */
-    --primary-foreground: 222.2 47.4% 11.2%; /* Koyu renk yazı */
-
+    --primary: 250 80% 65%;
+    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 250 80% 75%; /* Ring rengi primary ile uyumlu olabilir */
+    --ring: 250 80% 75%;
   }
 }
 
@@ -74,6 +55,8 @@
   }
   body {
     @apply bg-background text-foreground;
+    overflow-x: hidden;
+    position: relative;
   }
 }
 
@@ -94,6 +77,28 @@
       background-position: 0% 50%;
     }
   }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .break-words-all {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .overflow-x-clip {
+    overflow-x: clip;
+  }
 }
 
 @layer utilities {
@@ -108,44 +113,18 @@
   }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  .break-words-all {
-    word-break: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-  }
-
-  .no-scrollbar::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
-  }
-
-  .overflow-x-clip {
-    overflow-x: clip;
-  }
-}
-
-/* Ensure all containers respect max width */
+/* Container and layout fixes */
 .container {
   width: 100%;
   max-width: 100%;
   overflow-x: hidden;
 }
 
-/* Ensure all images are responsive */
 img {
   max-width: 100%;
   height: auto;
 }
 
-/* Ensure all text elements don't overflow */
 h1,
 h2,
 h3,
@@ -162,19 +141,17 @@ button {
   hyphens: auto;
 }
 
-/* Ensure all flex containers don't overflow */
 .flex,
 .flex-row,
 .flex-col {
   min-width: 0;
 }
 
-/* Ensure all grid items don't overflow */
 .grid > * {
   min-width: 0;
 }
 
-/* Fix for Twitch and Kick buttons */
+/* Button styles */
 button svg {
   pointer-events: none;
 }
@@ -183,7 +160,6 @@ button span {
   user-select: none;
 }
 
-/* Consistent hover effects for buttons */
 .btn-hover-effect {
   transition: all 0.2s ease-in-out;
 }
@@ -210,7 +186,6 @@ button span {
   border: 1px solid #1f2937;
 }
 
-/* Add these styles to the end of the file to support the fixed tab layout */
 /* Fixed tab layout styles */
 .fixed-tabs {
   display: grid;
@@ -255,19 +230,16 @@ button span {
   overflow-x: hidden;
 }
 
-/* Tab content container */
 .tab-content-container {
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto;
 }
 
-/* Add these utility classes to the end of the file to help with overflow control */
-
 /* Additional overflow control utilities */
 .overflow-x-auto-with-padding {
   overflow-x: auto;
-  padding-bottom: 0.5rem; /* Prevents scrollbar from cutting off content */
+  padding-bottom: 0.5rem;
 }
 
 .max-w-content {
@@ -280,57 +252,23 @@ button span {
   overflow-wrap: anywhere;
 }
 
-/* Ensure all sections have proper overflow control */
+/* Section and layout fixes */
 section {
   max-width: 100vw;
   position: relative;
 }
 
-/* Ensure all containers have proper width constraints */
-.container {
-  width: 100%;
-  max-width: 100%;
+main {
+  position: relative;
+  overflow-x: hidden;
 }
 
-/* Ensure all grid and flex layouts have proper width constraints */
-.grid,
-.flex {
-  max-width: 100%;
+section > .container {
+  position: relative;
+  z-index: 1;
 }
 
-/* Ensure all cards have proper width constraints */
-.card {
-  max-width: 100%;
-}
-
-/* Ensure all images have proper responsive constraints */
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Fix for absolute positioned elements */
-.absolute {
-  max-width: 100vw;
-}
-
-/* Ensure text wrapping */
-p,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-span,
-a {
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-}
-
-/* Add these specific rules to the end of your globals.css file */
-
-/* Specific fixes for the How to Earn Points section */
+/* Card styles */
 .card {
   max-width: 100%;
   overflow: hidden;
@@ -350,55 +288,14 @@ a {
   max-width: 100%;
 }
 
-/* Ensure grid items don't overflow */
-.grid {
-  width: 100%;
-  max-width: 100%;
-}
-
-.grid > * {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Ensure containers properly constrain content */
-.container {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Ensure sections don't allow horizontal overflow */
-section {
-  max-width: 100vw;
-}
-
-/* Ensure all flex containers don't overflow */
-.flex {
-  min-width: 0;
-  max-width: 100%;
-}
-
-/* Add these specific rules to the end of your globals.css file */
-
-/* Specific fixes for the Rewards Catalog hero section */
-.rewards-hero-section {
-  position: relative;
-  overflow: hidden;
-}
-
-.rewards-hero-section > .absolute {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-/* Specific fixes for the Earn Points hero section */
+/* Hero section fixes */
+.rewards-hero-section,
 .earn-points-hero-section {
   position: relative;
   overflow: hidden;
 }
 
+.rewards-hero-section > .absolute,
 .earn-points-hero-section > .absolute {
   position: absolute;
   width: 100%;
@@ -406,34 +303,23 @@ section {
   overflow: hidden;
 }
 
-/* Ensure content sections don't inherit the overflow hidden property */
 .earn-points-content-section {
   overflow-x: hidden;
   overflow-y: visible;
 }
 
-/* Specific fix for digital-weave.png background */
-.earn-points-hero-section .bg-\[url$$\'\/digital-weave\.png\'$$\] {\
-  background-size: cover;
-  background-position: center;
-  max-height: 100%;
-  overflow: hidden;
-}
-
-/* Ensure other sections don't inherit the overflow hidden property */
 section:not(.rewards-hero-section):not(.earn-points-hero-section) {
   overflow-x: hidden;
   overflow-y: visible;
 }
 
-/* Ensure ResponsiveContainer doesn't cause overflow */
 .responsive-container-wrapper {
   width: 100%;
   max-width: 100%;
   overflow: hidden;
 }
 
-/* Enhanced styling for the Rewards Redemption section */
+/* Rewards Redemption section */
 .rewards-redemption-section {
   position: relative;
   overflow: visible;
@@ -481,7 +367,6 @@ section:not(.rewards-hero-section):not(.earn-points-hero-section) {
   cursor: not-allowed;
 }
 
-/* Ensure the redemption result message is properly displayed */
 .rewards-redemption-section .rounded-lg {
   width: 100%;
   max-width: 100%;
@@ -489,7 +374,7 @@ section:not(.rewards-hero-section):not(.earn-points-hero-section) {
   word-break: break-word;
 }
 
-/* Improve responsive behavior on small screens */
+/* Responsive improvements */
 @media (max-width: 480px) {
   .rewards-redemption-section input {
     padding-right: 90px;
@@ -507,7 +392,7 @@ section:not(.rewards-hero-section):not(.earn-points-hero-section) {
   }
 }
 
-/* Add animation for the loading spinner */
+/* Animations */
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -521,45 +406,24 @@ section:not(.rewards-hero-section):not(.earn-points-hero-section) {
   animation: spin 1s linear infinite;
 }
 
-/* Fix for homepage hero section vertical scrolling */
-/* This targets the specific hero section on the homepage */
+/* Homepage hero section fixes */
 section.relative.overflow-hidden.bg-gradient-to-br.from-black.via-gray-900.to-black.py-20 {
   overflow: hidden !important;
   isolation: isolate;
   contain: paint;
 }
 
-/* Ensure the decorative elements don't cause scrolling */
 section.relative.overflow-hidden.bg-gradient-to-br.from-black.via-gray-900.to-black.py-20 .absolute {
   pointer-events: none;
   z-index: -1;
 }
 
-/* Fix for all sections with decorative elements that might cause scrolling */
 section:has(.absolute) {
   overflow: hidden !important;
   isolation: isolate;
 }
 
-/* Ensure body doesn't have unwanted overflow */
-body {
-  overflow-x: hidden;
-  position: relative;
-}
-
-/* Fix for main element to prevent unwanted scrolling */
-main {
-  position: relative;
-  overflow-x: hidden;
-}
-
-/* Ensure container elements within sections are properly contained */
-section > .container {
-  position: relative;
-  z-index: 1;
-}
-
-/* Add these styles for the category selection section */
+/* Category section styles */
 .category-section {
   background: linear-gradient(to bottom, rgba(17, 24, 39, 1), rgba(17, 24, 39, 0.95));
   backdrop-filter: blur(8px);
@@ -612,7 +476,6 @@ section > .container {
   }
 }
 
-/* Ensure the category section is responsive */
 @media (max-width: 640px) {
   .category-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -629,22 +492,21 @@ section > .container {
   }
 }
 
-/* Ensure the category section has proper z-index */
 .rewards-category-section {
   position: relative;
   z-index: 20;
 }
 
-/* Styles for the horizontal scrolling category list */
+/* Horizontal scrolling category list */
 .category-scroll-container {
   overflow-x: auto;
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   padding-bottom: 0.5rem;
 }
 
 .category-scroll-container::-webkit-scrollbar {
-  display: none; /* Chrome, Safari, Opera */
+  display: none;
 }
 
 .category-list {
@@ -654,8 +516,6 @@ section > .container {
   padding: 0.25rem 0;
 }
 
-/* Add these styles at the end of the file */
-
 /* Range Slider Styles */
 [data-radix-slider-thumb] {
   display: block !important;
@@ -663,7 +523,6 @@ section > .container {
   visibility: visible !important;
 }
 
-/* Ensure both handles are visible with proper styling */
 [data-radix-slider-thumb]:first-child,
 [data-radix-slider-thumb]:last-child {
   display: block !important;
@@ -671,29 +530,24 @@ section > .container {
   visibility: visible !important;
 }
 
-/* Add hover effect to slider handles */
 [data-radix-slider-thumb]:hover {
   background-color: #f0f0f0;
   transform: scale(1.1);
 }
 
-/* Add focus styles for accessibility */
 [data-radix-slider-thumb]:focus-visible {
   outline: 2px solid #9146ff;
   outline-offset: 2px;
 }
 
-/* Ensure the slider track has proper z-index */
 [data-radix-slider-track] {
   z-index: 0;
 }
 
-/* Ensure the slider range has proper z-index */
 [data-radix-slider-range] {
   z-index: 1;
 }
 
-/* Ensure the slider thumbs have proper z-index */
 [data-radix-slider-thumb] {
   z-index: 2;
 }
@@ -724,22 +578,18 @@ section > .container {
   }
 }
 
-/* Prevent text from shifting */
 .nav-link {
   position: relative;
   white-space: nowrap;
 }
 
-/* Ensure consistent button sizes */
 .auth-button,
 .user-dropdown {
   min-width: 100px;
   max-width: 180px;
 }
 
-/* Add these mobile-specific improvements to the end of the file */
-
-/* Improve touch targets for mobile */
+/* Mobile improvements */
 @media (max-width: 640px) {
   button,
   a,
@@ -750,21 +600,18 @@ section > .container {
     min-width: 44px;
   }
 
-  /* Ensure proper spacing between interactive elements */
   .button-group > * {
     margin: 0.25rem;
   }
 
-  /* Improve form elements */
   input,
   select,
   textarea {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
     padding: 0.75rem;
   }
 }
 
-/* Ensure text is readable on small screens */
 @media (max-width: 480px) {
   h1 {
     font-size: 1.75rem;
@@ -789,13 +636,12 @@ section > .container {
   }
 }
 
-/* Improve scrolling behavior */
+/* Scrolling improvements */
 .scroll-container {
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
 }
 
-/* Fix for position: fixed elements on mobile */
 .fixed-element {
   position: fixed;
   width: 100%;
@@ -804,12 +650,10 @@ section > .container {
   right: 0;
 }
 
-/* Prevent content from being hidden under fixed headers */
 .has-fixed-header {
   padding-top: var(--header-height, 4rem);
 }
 
-/* Improve mobile modal experience */
 @media (max-width: 640px) {
   [role="dialog"] {
     padding: 1rem;
@@ -823,7 +667,6 @@ section > .container {
   }
 }
 
-/* Ensure proper spacing on small screens */
 @media (max-width: 480px) {
   .container {
     padding-left: 0.75rem;
@@ -840,11 +683,8 @@ section > .container {
   }
 }
 
-/* Add these accessibility improvements to the end of the file */
-
-/* Ensure proper touch target sizes for accessibility */
+/* Accessibility improvements */
 @media (max-width: 640px) {
-  /* Minimum touch target size of 44x44px per WCAG guidelines */
   button,
   a,
   [role="button"],
@@ -859,12 +699,10 @@ section > .container {
     padding: 0.5rem 1rem;
   }
 
-  /* Ensure proper spacing between interactive elements */
   .button-group > * {
     margin: 0.25rem;
   }
 
-  /* Improve form controls */
   input[type="text"],
   input[type="email"],
   input[type="password"],
@@ -874,13 +712,12 @@ section > .container {
   input[type="number"],
   textarea,
   select {
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
     padding: 0.75rem;
     height: auto;
     min-height: 44px;
   }
 
-  /* Improve checkbox and radio button accessibility */
   input[type="checkbox"],
   input[type="radio"] {
     width: 24px;
@@ -889,7 +726,6 @@ section > .container {
     position: relative;
   }
 
-  /* Improve focus states for keyboard navigation */
   a:focus,
   button:focus,
   input:focus,
@@ -901,17 +737,14 @@ section > .container {
   }
 }
 
-/* Improve color contrast for text elements */
 .text-gray-400 {
-  color: #a0aec0; /* Improved contrast from default gray-400 */
+  color: #a0aec0;
 }
 
-/* Ensure proper text scaling */
 html {
-  font-size: 100%; /* Respect user's browser font size settings */
+  font-size: 100%;
 }
 
-/* Support reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
