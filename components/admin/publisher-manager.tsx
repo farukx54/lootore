@@ -33,9 +33,9 @@ const INITIAL_PUBLISHER_STATE: Omit<AdminPublisher, "id" | "created_at" | "updat
 
 export default function PublisherManager() {
   const {
-    publishers,
-    isLoading: isListLoading, // Renamed for clarity
-    isSubmitting, // New state for form operations
+    publishers = [],
+    isLoading: isListLoading,
+    isSubmitting,
     error: adminError,
     fetchAdminPublishers,
     addPublisher,
