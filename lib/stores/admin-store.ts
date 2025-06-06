@@ -1,6 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { supabase } from "@/lib/supabase/client"
+import type { AdminPublisher, AdminCoupon } from "@/lib/types/admin"
 
 interface AdminState {
   isAdminLoggedIn: boolean
@@ -8,6 +9,8 @@ interface AdminState {
   error: string | null
   isLoading: boolean
   isSubmitting: boolean
+  publishers: AdminPublisher[]
+  coupons: AdminCoupon[]
 }
 
 interface AdminActions {
@@ -15,6 +18,16 @@ interface AdminActions {
   adminLogout: () => Promise<void>
   clearAdminError: () => void
   checkAdminSession: () => Promise<void>
+  // Publisher actions
+  fetchAdminPublishers: () => Promise<void>
+  addPublisher: (publisher: Omit<AdminPublisher, "id" | "created_at" | "updated_at">) => Promise<boolean>
+  updatePublisher: (id: string, publisher: Partial<AdminPublisher>) => Promise<boolean>
+  deletePublisher: (id: string) => Promise<boolean>
+  // Coupon actions
+  fetchAdminCoupons: () => Promise<void>
+  addCoupon: (coupon: Omit<AdminCoupon, "id" | "created_at" | "updated_at">) => Promise<boolean>
+  updateCoupon: (id: string, coupon: Partial<AdminCoupon>) => Promise<boolean>
+  deleteCoupon: (id: string) => Promise<boolean>
 }
 
 type AdminStore = AdminState & AdminActions
@@ -28,6 +41,8 @@ export const useAdminStore = create<AdminStore>()(
       error: null,
       isLoading: false,
       isSubmitting: false,
+      publishers: [],
+      coupons: [],
 
       // Actions
       adminLogin: async (credentials) => {
@@ -191,6 +206,141 @@ export const useAdminStore = create<AdminStore>()(
             adminUser: null,
             isLoading: false,
           })
+        }
+      },
+
+      // Publisher actions
+      fetchAdminPublishers: async () => {
+        try {
+          set({ isLoading: true, error: null })
+          const { data, error } = await supabase.from("publishers").select("*").order("created_at", { ascending: false })
+
+          if (error) throw error
+          set({ publishers: data || [], isLoading: false })
+        } catch (error: any) {
+          console.error("Fetch publishers error:", error)
+          set({ error: error.message || "Failed to fetch publishers", isLoading: false })
+        }
+      },
+
+      addPublisher: async (publisher) => {
+        try {
+          set({ isSubmitting: true, error: null })
+          const { data, error } = await supabase.from("publishers").insert(publisher).select().single()
+
+          if (error) throw error
+          set((state) => ({ publishers: [data, ...state.publishers], isSubmitting: false }))
+          return true
+        } catch (error: any) {
+          console.error("Add publisher error:", error)
+          set({ error: error.message || "Failed to add publisher", isSubmitting: false })
+          return false
+        }
+      },
+
+      updatePublisher: async (id, publisher) => {
+        try {
+          set({ isSubmitting: true, error: null })
+          const { data, error } = await supabase
+            .from("publishers")
+            .update(publisher)
+            .eq("id", id)
+            .select()
+            .single()
+
+          if (error) throw error
+          set((state) => ({
+            publishers: state.publishers.map((p) => (p.id === id ? data : p)),
+            isSubmitting: false,
+          }))
+          return true
+        } catch (error: any) {
+          console.error("Update publisher error:", error)
+          set({ error: error.message || "Failed to update publisher", isSubmitting: false })
+          return false
+        }
+      },
+
+      deletePublisher: async (id) => {
+        try {
+          set({ isSubmitting: true, error: null })
+          const { error } = await supabase.from("publishers").delete().eq("id", id)
+
+          if (error) throw error
+          set((state) => ({
+            publishers: state.publishers.filter((p) => p.id !== id),
+            isSubmitting: false,
+          }))
+          return true
+        } catch (error: any) {
+          console.error("Delete publisher error:", error)
+          set({ error: error.message || "Failed to delete publisher", isSubmitting: false })
+          return false
+        }
+      },
+
+      // Coupon actions
+      fetchAdminCoupons: async () => {
+        try {
+          set({ isLoading: true, error: null })
+          const { data, error } = await supabase.from("coupons").select("*").order("created_at", { ascending: false })
+
+          if (error) throw error
+          set({ coupons: data || [], isLoading: false })
+        } catch (error: any) {
+          console.error("Fetch coupons error:", error)
+          set({ error: error.message || "Failed to fetch coupons", isLoading: false })
+        }
+      },
+
+      addCoupon: async (coupon) => {
+        try {
+          set({ isSubmitting: true, error: null })
+          const { data, error } = await supabase.from("coupons").insert(coupon).select().single()
+
+          if (error) throw error
+          set((state) => ({ coupons: [data, ...state.coupons], isSubmitting: false }))
+          return true
+        } catch (error: any) {
+          console.error("Add coupon error:", error)
+          set({ error: error.message || "Failed to add coupon", isSubmitting: false })
+          return false
+        }
+      },
+
+      updateCoupon: async (id, coupon) => {
+        try {
+          set({ isSubmitting: true, error: null })
+          const { data, error } = await supabase.from("coupons").update(coupon).eq("id", id).select().single()
+
+          if (error) throw error
+          set((state) => ({
+            coupons: state.coupons.map((c) => (c.id === id ? data : c)),
+            isSubmitting: false,
+          }))
+          return true
+        } catch (error: any) {
+          console.error("Update coupon error:", error)
+          set({ error: error.message || "Failed to update coupon", isSubmitting: false })
+          return false
+        }
+      },
+
+      deleteCoupon: async (id) => {
+        try {
+          set({ isSubmitting: true, error: null })
+          const { error } = await supabase.from("coupons").delete().eq("id", id)
+
+          if (error) throw error
+          set((state) => ({
+            coupons: state.coupons.filter((c) => c.id !== id),
+            isSubmitting: false,
+          }))
+          return true
+        } catch (error: any) {
+          console.error("Delete coupon error:", error)
+          set({ error: error.message || "Failed to delete coupon", isSubmitting: false })
+          return false
         }
       },
     }),
