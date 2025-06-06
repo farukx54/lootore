@@ -15,7 +15,7 @@ import { z } from "zod"
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
-    username: "", // Bu e-posta olacak
+    email: "", // username yerine email kullanıyoruz
     password: "",
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -33,17 +33,13 @@ export default function AdminLoginPage() {
   useEffect(() => {
     // Eğer kullanıcı zaten admin olarak giriş yapmışsa ve yükleme durumu yoksa /admin sayfasına yönlendir
     if (isAdminLoggedIn && !isLoading) {
-      // Başarılı giriş mesajı göster
-      const timer = setTimeout(() => {
-        router.push("/admin")
-      }, 1500) // 1.5 saniye bekle
-
-      return () => clearTimeout(timer)
+      router.push("/admin")
     }
   }, [isAdminLoggedIn, isLoading, router])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+    // Input değiştiğinde ilgili alanın hata mesajını temizle
     if (validationErrors[field]) {
       setValidationErrors((prev) => {
         const newErrors = { ...prev }
@@ -51,6 +47,7 @@ export default function AdminLoginPage() {
         return newErrors
       })
     }
+    // Input değiştiğinde genel hata mesajını temizle
     if (adminError) {
       clearAdminError()
     }
@@ -77,12 +74,20 @@ export default function AdminLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Form validasyonu
     if (!validateForm()) {
       return
     }
+
+    // Hata mesajlarını temizle
     clearAdminError()
-    await adminLogin(formData)
-    // Yönlendirme artık useEffect içinde isAdminLoggedIn ve isLoading değişimine göre yapılacak
+    
+    // Login işlemini başlat
+    await adminLogin({
+      username: formData.email, // email'i username olarak gönder
+      password: formData.password
+    })
   }
 
   // Eğer zaten giriş yapılmışsa ve yönlendirme bekleniyorsa, başarılı mesaj göster
@@ -103,14 +108,6 @@ export default function AdminLoginPage() {
     )
   }
 
-  if (isAdminLoggedIn && isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <p className="text-white">Giriş yapıldı, yönlendiriliyorsunuz...</p>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 p-4">
       <div className="absolute inset-0 bg-[url('/neon-fracture.png')] bg-cover bg-center opacity-10"></div>
@@ -125,19 +122,21 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-white">
+              <Label htmlFor="email" className="text-white">
                 E-posta Adresi
               </Label>
               <Input
-                id="username"
+                id="email"
                 type="email"
-                value={formData.username}
-                onChange={(e) => handleInputChange("username", e.target.value)}
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
                 className="bg-gray-700 border-gray-600 text-white focus:border-red-500"
                 placeholder="Admin e-posta adresinizi girin"
                 disabled={isLoading}
               />
-              {validationErrors.username && <p className="text-sm text-red-400">{validationErrors.username}</p>}
+              {validationErrors.email && (
+                <p className="text-sm text-red-400">{validationErrors.email}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="password" className="text-white">
@@ -162,7 +161,9 @@ export default function AdminLoginPage() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {validationErrors.password && <p className="text-sm text-red-400">{validationErrors.password}</p>}
+              {validationErrors.password && (
+                <p className="text-sm text-red-400">{validationErrors.password}</p>
+              )}
             </div>
             {adminError && (
               <Alert variant="destructive" className="border-red-500 bg-red-500/10">

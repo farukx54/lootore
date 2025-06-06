@@ -9,6 +9,13 @@ export const AdminUserSchema = z.object({
 })
 export type AdminUser = z.infer<typeof AdminUserSchema>
 
+// Admin Login Şeması
+export const AdminLoginSchema = z.object({
+  email: z.string().email("Geçerli bir e-posta adresi girin."),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır."),
+})
+export type AdminLoginData = z.infer<typeof AdminLoginSchema>
+
 // Admin Panelinde Yayıncı Yönetimi için Şema
 export const AdminPublisherSchema = z.object({
   id: z.string().uuid().optional(), // Yeni eklerken olmayacak, düzenlerken olacak
@@ -39,10 +46,3 @@ export const AdminCouponSchema = z.object({
   // max_uses_per_user gibi kısıtlamalar eklenebilir
 })
 export type AdminCoupon = z.infer<typeof AdminCouponSchema>
-
-// Admin Login Şeması
-export const AdminLoginSchema = z.object({
-  email: z.string().email("Geçerli bir e-posta adresi girin."),
-  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır."),
-})
-export type AdminLoginData = z.infer<typeof AdminLoginSchema>

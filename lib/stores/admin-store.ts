@@ -36,7 +36,7 @@ export const useAdminStore = create<AdminStore>()(
 
           // Supabase ile giriş yap
           const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.username,
+            email: credentials.username, // username olarak gelen değer aslında email
             password: credentials.password,
           })
 
@@ -60,11 +60,11 @@ export const useAdminStore = create<AdminStore>()(
           // Kullanıcının admin olup olmadığını kontrol et
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("role")
+            .select("is_admin")
             .eq("id", data.user.id)
             .single()
 
-          if (profileError || !profile || profile.role !== "admin") {
+          if (profileError || !profile || !profile.is_admin) {
             console.error("Admin role check failed:", profileError)
 
             // Admin değilse oturumu kapat
@@ -133,17 +133,7 @@ export const useAdminStore = create<AdminStore>()(
             error,
           } = await supabase.auth.getSession()
 
-          if (error) {
-            console.error("Session check error:", error)
-            set({
-              isAdminLoggedIn: false,
-              adminUser: null,
-              isLoading: false,
-            })
-            return
-          }
-
-          if (!session?.user) {
+          if (error || !session?.user) {
             set({
               isAdminLoggedIn: false,
               adminUser: null,
@@ -155,11 +145,11 @@ export const useAdminStore = create<AdminStore>()(
           // Admin rolünü kontrol et
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("role")
+            .select("is_admin")
             .eq("id", session.user.id)
             .single()
 
-          if (profileError || !profile || profile.role !== "admin") {
+          if (profileError || !profile || !profile.is_admin) {
             // Admin değilse oturumu kapat
             await supabase.auth.signOut()
             set({
