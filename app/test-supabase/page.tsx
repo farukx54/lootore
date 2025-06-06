@@ -17,4 +17,4 @@ export default function TestSupabasePage() {
       </div>
     </div>
   )
-} 
+}
