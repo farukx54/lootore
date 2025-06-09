@@ -5,14 +5,35 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PublisherManager from "@/components/admin/publisher-manager"
 import CouponManager from "@/components/admin/coupon-manager"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Users, Gift, Settings, BarChart3 } from "lucide-react"
+import { Users, Gift, Settings, BarChart3, LogOut } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useAdminStore } from "@/lib/stores/admin-store"
+import { useRouter } from "next/navigation"
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("publishers")
+  const adminLogout = useAdminStore((state) => state.adminLogout)
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await adminLogout()
+    router.push("/admin/login")
+  }
 
   return (
     <main className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-6">Admin Paneli</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Admin Paneli</h1>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center gap-2"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4" />
+          Çıkış Yap
+        </Button>
+      </div>
 
       <div className="grid gap-6 md:grid-cols-4 mb-8">
         <Card>

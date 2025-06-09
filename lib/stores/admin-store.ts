@@ -1,44 +1,35 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import { supabase } from "@/lib/supabase/client"
+import type { User } from "@supabase/supabase-js"
 import type { AdminPublisher, AdminCoupon } from "@/lib/types/admin"
-import { StateCreator, StoreApi } from "zustand"
-import { PersistOptions } from "zustand/middleware"
 
 interface AdminState {
   isAdminLoggedIn: boolean
-  adminUser: any | null
+  adminUser: User | null
   error: string | null
   isLoading: boolean
   isSubmitting: boolean
   sessionChecked: boolean
   publishers: AdminPublisher[]
   coupons: AdminCoupon[]
-}
-
-interface AdminActions {
   adminLogin: (credentials: { username: string; password: string }) => Promise<void>
   adminLogout: () => Promise<void>
   clearAdminError: () => void
   checkAdminSession: () => Promise<void>
-  // Publisher actions
-  fetchAdminPublishers: () => Promise<void>
-  addPublisher: (publisher: Omit<AdminPublisher, "id" | "created_at" | "updated_at">) => Promise<boolean>
-  updatePublisher: (id: string, publisher: Partial<AdminPublisher>) => Promise<boolean>
-  deletePublisher: (id: string) => Promise<boolean>
-  // Coupon actions
-  fetchAdminCoupons: () => Promise<void>
-  addCoupon: (coupon: Omit<AdminCoupon, "id" | "created_at" | "updated_at">) => Promise<boolean>
-  updateCoupon: (id: string, coupon: Partial<AdminCoupon>) => Promise<boolean>
-  deleteCoupon: (id: string) => Promise<boolean>
+  fetchPublishers: () => Promise<void>
+  fetchCoupons: () => Promise<void>
+  createPublisher: (publisher: Omit<AdminPublisher, "id">) => Promise<void>
+  updatePublisher: (id: string, publisher: Partial<AdminPublisher>) => Promise<void>
+  deletePublisher: (id: string) => Promise<void>
+  createCoupon: (coupon: Omit<AdminCoupon, "id">) => Promise<void>
+  updateCoupon: (id: string, coupon: Partial<AdminCoupon>) => Promise<void>
+  deleteCoupon: (id: string) => Promise<void>
 }
 
-type AdminStore = AdminState & AdminActions
-
-export const useAdminStore = create<AdminStore>()(
+export const useAdminStore = create<AdminState>()(
   persist(
-    (set: StoreApi<AdminStore>["setState"], get: StoreApi<AdminStore>["getState"]) => ({
-      // Initial state
+    (set) => ({
       isAdminLoggedIn: false,
       adminUser: null,
       error: null,
@@ -48,14 +39,12 @@ export const useAdminStore = create<AdminStore>()(
       publishers: [],
       coupons: [],
 
-      // Actions
-      adminLogin: async (credentials: { username: string; password: string }) => {
+      adminLogin: async (credentials) => {
         try {
           set({ isSubmitting: true, error: null })
 
-          // Supabase ile giriş yap
           const { data, error } = await supabase.auth.signInWithPassword({
-            email: credentials.username, // username olarak gelen değer aslında email
+            email: credentials.username,
             password: credentials.password,
           })
 
@@ -63,7 +52,6 @@ export const useAdminStore = create<AdminStore>()(
             console.error("Admin login error:", error)
             let errorMessage = "Giriş bilgileri hatalı. Lütfen e-posta ve şifrenizi kontrol edin."
 
-            // Supabase'den gelen hata mesajlarını daha anlaşılır hale getir
             if (error.message === "Email logins are disabled") {
               errorMessage = "Email ile giriş devre dışı. Lütfen sistem yöneticisi ile iletişime geçin."
             } else if (error.message === "Invalid login credentials") {
@@ -87,26 +75,11 @@ export const useAdminStore = create<AdminStore>()(
             return
           }
 
-          // Kullanıcının admin olup olmadığını kontrol et
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("user_id", data.user.id)
-            .single()
+          // Admin rolü kontrolü
+          const isAdmin = data.user.user_metadata?.role === "admin"
 
-          if (profileError) {
-            console.error("Profile fetch error:", profileError)
-            set({
-              error: "Kullanıcı bilgileri alınamadı. Lütfen tekrar deneyin.",
-              isSubmitting: false,
-            })
-            return
-          }
-
-          if (!profile || !profile.is_admin) {
-            // Admin değilse oturumu kapat
+          if (!isAdmin) {
             await supabase.auth.signOut()
-
             set({
               error: "Bu hesap admin yetkisine sahip değil.",
               isSubmitting: false,
@@ -114,7 +87,6 @@ export const useAdminStore = create<AdminStore>()(
             return
           }
 
-          // Başarılı giriş
           set({
             isAdminLoggedIn: true,
             adminUser: data.user,
@@ -165,10 +137,7 @@ export const useAdminStore = create<AdminStore>()(
         try {
           set({ isLoading: true })
 
-          const {
-            data: { session },
-            error,
-          } = await supabase.auth.getSession()
+          const { data: { session }, error } = await supabase.auth.getSession()
 
           if (error || !session?.user) {
             set({
@@ -177,20 +146,13 @@ export const useAdminStore = create<AdminStore>()(
               isLoading: false,
               sessionChecked: true,
             })
-            // Persisted state'i de sıfırla
-            localStorage.setItem("admin-storage", JSON.stringify({ isAdminLoggedIn: false, adminUser: null }))
             return
           }
 
-          // Admin rolünü kontrol et
-          const { data: profile, error: profileError } = await supabase
-            .from("profiles")
-            .select("is_admin")
-            .eq("user_id", session.user.id)
-            .single()
+          // Admin rolü kontrolü
+          const isAdmin = session.user.user_metadata?.role === "admin"
 
-          if (profileError || !profile || !profile.is_admin) {
-            // Admin değilse oturumu kapat
+          if (!isAdmin) {
             await supabase.auth.signOut()
             set({
               isAdminLoggedIn: false,
@@ -201,7 +163,6 @@ export const useAdminStore = create<AdminStore>()(
             return
           }
 
-          // Admin oturumu geçerli
           set({
             isAdminLoggedIn: true,
             adminUser: session.user,
@@ -219,157 +180,184 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      // Publisher actions
-      fetchAdminPublishers: async () => {
+      fetchPublishers: async () => {
         try {
-          // Session ve admin kontrolü
-          const { isAdminLoggedIn, sessionChecked } = get()
-          if (!sessionChecked) {
-            // Session kontrolü tamamlanmadan fetch yapılmasın
-            return
-          }
-          if (!isAdminLoggedIn) {
-            set({ error: "Admin girişi yapılmadan yayıncılar getirilemez." })
-            return
-          }
-          set({ isLoading: true, error: null })
-          const { data, error } = await supabase.from("publishers").select("*").order("created_at", { ascending: false })
+          set({ isLoading: true })
 
-          if (error) throw error
-          set({ publishers: data || [], isLoading: false })
-        } catch (error: any) {
-          console.error("Fetch publishers error:", error)
-          set({ error: error.message || "Failed to fetch publishers", isLoading: false })
-        }
-      },
-
-      addPublisher: async (publisher: Omit<AdminPublisher, "id" | "created_at" | "updated_at">) => {
-        try {
-          set({ isSubmitting: true, error: null })
-          const { data, error } = await supabase.from("publishers").insert(publisher).select().single()
-
-          if (error) throw error
-          set((state: AdminStore) => ({ publishers: [data, ...state.publishers], isSubmitting: false }))
-          return true
-        } catch (error: any) {
-          console.error("Add publisher error:", error)
-          set({ error: error.message || "Failed to add publisher", isSubmitting: false })
-          return false
-        }
-      },
-
-      updatePublisher: async (id: string, publisher: Partial<AdminPublisher>) => {
-        try {
-          set({ isSubmitting: true, error: null })
           const { data, error } = await supabase
+            .from("publishers")
+            .select("*")
+            .order("name")
+
+          if (error) {
+            console.error("Error fetching publishers:", error)
+            set({ error: "Yayıncılar yüklenirken hata oluştu.", isLoading: false })
+            return
+          }
+
+          set({ publishers: data || [], isLoading: false })
+        } catch (error) {
+          console.error("Unexpected error fetching publishers:", error)
+          set({ error: "Yayıncılar yüklenirken beklenmeyen hata oluştu.", isLoading: false })
+        }
+      },
+
+      fetchCoupons: async () => {
+        try {
+          set({ isLoading: true })
+
+          const { data, error } = await supabase
+            .from("coupons")
+            .select("*")
+            .order("created_at", { ascending: false })
+
+          if (error) {
+            console.error("Error fetching coupons:", error)
+            set({ error: "Kuponlar yüklenirken hata oluştu.", isLoading: false })
+            return
+          }
+
+          set({ coupons: data || [], isLoading: false })
+        } catch (error) {
+          console.error("Unexpected error fetching coupons:", error)
+          set({ error: "Kuponlar yüklenirken beklenmeyen hata oluştu.", isLoading: false })
+        }
+      },
+
+      createPublisher: async (publisher) => {
+        try {
+          set({ isSubmitting: true })
+
+          const { error } = await supabase.from("publishers").insert(publisher)
+
+          if (error) {
+            console.error("Error creating publisher:", error)
+            set({ error: "Yayıncı oluşturulurken hata oluştu.", isSubmitting: false })
+            return
+          }
+
+          set({ isSubmitting: false })
+          // Refresh publishers list
+          await useAdminStore.getState().fetchPublishers()
+        } catch (error) {
+          console.error("Unexpected error creating publisher:", error)
+          set({ error: "Yayıncı oluşturulurken beklenmeyen hata oluştu.", isSubmitting: false })
+        }
+      },
+
+      updatePublisher: async (id, publisher) => {
+        try {
+          set({ isSubmitting: true })
+
+          const { error } = await supabase
             .from("publishers")
             .update(publisher)
             .eq("id", id)
-            .select()
-            .single()
 
-          if (error) throw error
-          set((state: AdminStore) => ({
-            publishers: state.publishers.map((p: AdminPublisher) => (p.id === id ? data : p)),
-            isSubmitting: false,
-          }))
-          return true
-        } catch (error: any) {
-          console.error("Update publisher error:", error)
-          set({ error: error.message || "Failed to update publisher", isSubmitting: false })
-          return false
+          if (error) {
+            console.error("Error updating publisher:", error)
+            set({ error: "Yayıncı güncellenirken hata oluştu.", isSubmitting: false })
+            return
+          }
+
+          set({ isSubmitting: false })
+          // Refresh publishers list
+          await useAdminStore.getState().fetchPublishers()
+        } catch (error) {
+          console.error("Unexpected error updating publisher:", error)
+          set({ error: "Yayıncı güncellenirken beklenmeyen hata oluştu.", isSubmitting: false })
         }
       },
 
-      deletePublisher: async (id: string) => {
+      deletePublisher: async (id) => {
         try {
-          set({ isSubmitting: true, error: null })
+          set({ isSubmitting: true })
+
           const { error } = await supabase.from("publishers").delete().eq("id", id)
 
-          if (error) throw error
-          set((state: AdminStore) => ({
-            publishers: state.publishers.filter((p: AdminPublisher) => p.id !== id),
-            isSubmitting: false,
-          }))
-          return true
-        } catch (error: any) {
-          console.error("Delete publisher error:", error)
-          set({ error: error.message || "Failed to delete publisher", isSubmitting: false })
-          return false
+          if (error) {
+            console.error("Error deleting publisher:", error)
+            set({ error: "Yayıncı silinirken hata oluştu.", isSubmitting: false })
+            return
+          }
+
+          set({ isSubmitting: false })
+          // Refresh publishers list
+          await useAdminStore.getState().fetchPublishers()
+        } catch (error) {
+          console.error("Unexpected error deleting publisher:", error)
+          set({ error: "Yayıncı silinirken beklenmeyen hata oluştu.", isSubmitting: false })
         }
       },
 
-      // Coupon actions
-      fetchAdminCoupons: async () => {
+      createCoupon: async (coupon) => {
         try {
-          set({ isLoading: true, error: null })
-          const { data, error } = await supabase.from("coupons").select("*").order("created_at", { ascending: false })
+          set({ isSubmitting: true })
 
-          if (error) throw error
-          set({ coupons: data || [], isLoading: false })
-        } catch (error: any) {
-          console.error("Fetch coupons error:", error)
-          set({ error: error.message || "Failed to fetch coupons", isLoading: false })
+          const { error } = await supabase.from("coupons").insert(coupon)
+
+          if (error) {
+            console.error("Error creating coupon:", error)
+            set({ error: "Kupon oluşturulurken hata oluştu.", isSubmitting: false })
+            return
+          }
+
+          set({ isSubmitting: false })
+          // Refresh coupons list
+          await useAdminStore.getState().fetchCoupons()
+        } catch (error) {
+          console.error("Unexpected error creating coupon:", error)
+          set({ error: "Kupon oluşturulurken beklenmeyen hata oluştu.", isSubmitting: false })
         }
       },
 
-      addCoupon: async (coupon: Omit<AdminCoupon, "id" | "created_at" | "updated_at">) => {
+      updateCoupon: async (id, coupon) => {
         try {
-          set({ isSubmitting: true, error: null })
-          const { data, error } = await supabase.from("coupons").insert(coupon).select().single()
+          set({ isSubmitting: true })
 
-          if (error) throw error
-          set((state: AdminStore) => ({ coupons: [data, ...state.coupons], isSubmitting: false }))
-          return true
-        } catch (error: any) {
-          console.error("Add coupon error:", error)
-          set({ error: error.message || "Failed to add coupon", isSubmitting: false })
-          return false
+          const { error } = await supabase
+            .from("coupons")
+            .update(coupon)
+            .eq("id", id)
+
+          if (error) {
+            console.error("Error updating coupon:", error)
+            set({ error: "Kupon güncellenirken hata oluştu.", isSubmitting: false })
+            return
+          }
+
+          set({ isSubmitting: false })
+          // Refresh coupons list
+          await useAdminStore.getState().fetchCoupons()
+        } catch (error) {
+          console.error("Unexpected error updating coupon:", error)
+          set({ error: "Kupon güncellenirken beklenmeyen hata oluştu.", isSubmitting: false })
         }
       },
 
-      updateCoupon: async (id: string, coupon: Partial<AdminCoupon>) => {
+      deleteCoupon: async (id) => {
         try {
-          set({ isSubmitting: true, error: null })
-          const { data, error } = await supabase.from("coupons").update(coupon).eq("id", id).select().single()
+          set({ isSubmitting: true })
 
-          if (error) throw error
-          set((state: AdminStore) => ({
-            coupons: state.coupons.map((c: AdminCoupon) => (c.id === id ? data : c)),
-            isSubmitting: false,
-          }))
-          return true
-        } catch (error: any) {
-          console.error("Update coupon error:", error)
-          set({ error: error.message || "Failed to update coupon", isSubmitting: false })
-          return false
-        }
-      },
-
-      deleteCoupon: async (id: string) => {
-        try {
-          set({ isSubmitting: true, error: null })
           const { error } = await supabase.from("coupons").delete().eq("id", id)
 
-          if (error) throw error
-          set((state: AdminStore) => ({
-            coupons: state.coupons.filter((c: AdminCoupon) => c.id !== id),
-            isSubmitting: false,
-          }))
-          return true
-        } catch (error: any) {
-          console.error("Delete coupon error:", error)
-          set({ error: error.message || "Failed to delete coupon", isSubmitting: false })
-          return false
+          if (error) {
+            console.error("Error deleting coupon:", error)
+            set({ error: "Kupon silinirken hata oluştu.", isSubmitting: false })
+            return
+          }
+
+          set({ isSubmitting: false })
+          // Refresh coupons list
+          await useAdminStore.getState().fetchCoupons()
+        } catch (error) {
+          console.error("Unexpected error deleting coupon:", error)
+          set({ error: "Kupon silinirken beklenmeyen hata oluştu.", isSubmitting: false })
         }
       },
     }),
     {
       name: "admin-storage",
-      partialize: (state) => ({
-        isAdminLoggedIn: state.isAdminLoggedIn,
-        adminUser: state.adminUser,
-      }),
     },
   ),
 )
