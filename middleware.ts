@@ -28,16 +28,14 @@ export async function middleware(request: NextRequest) {
     }
 
     if (error || !session?.user) {
-      console.log("No session or error, returning 401 Unauthorized")
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.redirect(new URL("/admin/login", request.url))
     }
 
     // user_metadata içinde admin rolü var mı?
     const isAdmin = session.user.user_metadata?.role === "admin"
 
     if (!isAdmin) {
-      console.log("User is not admin, returning 401 Unauthorized")
-      return new NextResponse("Unauthorized", { status: 401 })
+      return NextResponse.redirect(new URL("/admin/login", request.url))
     }
 
     return NextResponse.next()

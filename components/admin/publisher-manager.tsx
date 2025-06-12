@@ -37,7 +37,7 @@ export default function PublisherManager() {
     isLoading: isListLoading,
     isSubmitting,
     error: adminError,
-    fetchAdminPublishers,
+    fetchPublishers,
     addPublisher,
     updatePublisher,
     deletePublisher,
@@ -50,8 +50,8 @@ export default function PublisherManager() {
   const { toast } = useToast()
 
   useEffect(() => {
-    fetchAdminPublishers()
-  }, [fetchAdminPublishers])
+    fetchPublishers()
+  }, [fetchPublishers])
 
   useEffect(() => {
     if (adminError) {
