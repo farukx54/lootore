@@ -25,7 +25,7 @@ export async function middleware(request: NextRequest) {
     name: 'sb-auth-token',
     value: sbAuthToken || '',
     path: '/',
-    domain: 'www.lootore.com',
+    domain: '.lootore.com',
     sameSite: 'lax',
     secure: true
   })
