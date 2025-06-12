@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
 import { cookies } from "next/headers"
-import type { Database } from "@/lib/database.types"
+import type { Database } from "@/lib/supabase/types"
 
 // Route configurations
 const publicRoutes = ["/", "/nasil-kazanilir", "/yayinlar", "/oduller"]
@@ -14,95 +14,114 @@ const adminAuthRoutes = ["/admin/login"]
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
+  // Cookie ayarlarını düzenle
+  const response = NextResponse.next()
+  const sbAuthToken = request.cookies.get('sb-auth-token')?.value;
+  if (!sbAuthToken) {
+    console.warn('[MIDDLEWARE] sb-auth-token çerezi bulunamadı. Kullanıcı oturumu yok veya çerez silinmiş.');
+  }
+
+  response.cookies.set({
+    name: 'sb-auth-token',
+    value: sbAuthToken || '',
+    path: '/',
+    domain: 'www.lootore.com',
+    sameSite: 'lax',
+    secure: true
+  })
+
   // Admin routes protection - STRICT MODE
   if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    console.log("Admin route detected:", pathname)
+    console.log("[MIDDLEWARE] Admin route detected:", pathname)
 
-    // Supabase auth ile admin rolü kontrolü
-    const supabase = createServerComponentClient<Database>({ cookies })
-    const { data: { session }, error } = await supabase.auth.getSession()
+    try {
+      // Supabase auth ile admin rolü kontrolü
+      const supabase = createServerComponentClient<Database>({ cookies })
+      const { data: { session }, error } = await supabase.auth.getSession()
 
-    console.log("[MIDDLEWARE] Session:", session)
-    if (session?.user) {
-      console.log("[MIDDLEWARE] User:", session.user)
-    }
+      if (error) {
+        console.error("[MIDDLEWARE] Error getting session:", error.message)
+        return NextResponse.redirect(new URL("/admin/login", request.url))
+      }
 
-    if (error || !session?.user) {
+      console.log("[MIDDLEWARE] Session:", session)
+      if (session?.user) {
+        console.log("[MIDDLEWARE] User:", session.user)
+      }
+
+      if (!session?.user) {
+        console.log("[MIDDLEWARE] No session found, redirecting to login")
+        return NextResponse.redirect(new URL("/admin/login", request.url))
+      }
+
+      // user_metadata içinde admin rolü var mı?
+      const isAdmin = session.user.user_metadata?.role === "admin"
+
+      if (!isAdmin) {
+        console.log("[MIDDLEWARE] User is not admin, redirecting to login")
+        return NextResponse.redirect(new URL("/admin/login", request.url))
+      }
+
+      return response
+    } catch (error) {
+      console.error("[MIDDLEWARE] Unexpected error:", error)
       return NextResponse.redirect(new URL("/admin/login", request.url))
     }
-
-    // user_metadata içinde admin rolü var mı?
-    const isAdmin = session.user.user_metadata?.role === "admin"
-
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL("/admin/login", request.url))
-    }
-
-    return NextResponse.next()
   }
 
   // Admin login page - sadece erişime izin ver, yönlendirme yapma
   if (pathname.startsWith("/admin/login")) {
-    return NextResponse.next()
+    return response
   }
 
   // Protected routes - check auth
   if (pathname.startsWith("/protected")) {
-    const supabase = createServerComponentClient<Database>({ cookies })
-    const { data: { session }, error } = await supabase.auth.getSession()
+    try {
+      const supabase = createServerComponentClient<Database>({ cookies })
+      const { data: { session }, error } = await supabase.auth.getSession()
 
-    if (error || !session?.user) {
+      if (error) {
+        console.error("[MIDDLEWARE] Error getting session:", error.message)
+        return NextResponse.redirect(new URL("/auth/login", request.url))
+      }
+
+      if (!session?.user) {
+        console.log("[MIDDLEWARE] No session found for protected route")
+        return NextResponse.redirect(new URL("/auth/login", request.url))
+      }
+
+      return response
+    } catch (error) {
+      console.error("[MIDDLEWARE] Unexpected error:", error)
       return NextResponse.redirect(new URL("/auth/login", request.url))
     }
-
-    return NextResponse.next()
   }
 
   // Auth pages - redirect to home if already logged in
   if (pathname.startsWith("/auth")) {
-    const supabase = createServerComponentClient<Database>({ cookies })
-    const { data: { session }, error } = await supabase.auth.getSession()
+    try {
+      const supabase = createServerComponentClient<Database>({ cookies })
+      const { data: { session }, error } = await supabase.auth.getSession()
 
-    if (error || !session?.user) {
-      return NextResponse.next()
+      if (error) {
+        console.error("[MIDDLEWARE] Error getting session:", error.message)
+        return response
+      }
+
+      if (session?.user) {
+        console.log("[MIDDLEWARE] User already logged in, redirecting to home")
+        return NextResponse.redirect(new URL("/", request.url))
+      }
+
+      return response
+    } catch (error) {
+      console.error("[MIDDLEWARE] Unexpected error:", error)
+      return response
     }
-
-    return NextResponse.redirect(new URL("/", request.url))
-  }
-
-  // Redirect logged-in users away from auth pages
-  if (authRoutes.some((route) => pathname.startsWith(route))) {
-    const supabase = createServerComponentClient<Database>({ cookies })
-    const { data: { session }, error } = await supabase.auth.getSession()
-
-    if (error || !session?.user) {
-      return NextResponse.redirect(new URL("/", request.url))
-    }
-  }
-
-  // Protected routes - require authentication
-  if (protectedRoutes.some((route) => pathname.startsWith(route))) {
-    const supabase = createServerComponentClient<Database>({ cookies })
-    const { data: { session }, error } = await supabase.auth.getSession()
-
-    if (error || !session?.user) {
-      // Store the attempted URL for redirect after login
-      const redirectUrl = new URL("/login", request.url)
-      redirectUrl.searchParams.set("redirect", pathname)
-      return NextResponse.redirect(redirectUrl)
-    }
-  }
-
-  // Eğer www.lootore.com'da isek ve /admin veya /admin/login route'una erişiliyorsa api.lootore.com'a yönlendir
-  if (
-    (request.headers.get("host") === "www.lootore.com" || request.headers.get("host") === "lootore.com") &&
-    pathname.startsWith("/admin")
-  ) {
-    return NextResponse.redirect(`https://api.lootore.com${pathname}`)
   }
 
   // Public routes - no restrictions
-  return NextResponse.next()
+  return response
 }
 
 export const config = {
@@ -110,14 +129,7 @@ export const config = {
     "/admin/:path*",
     "/protected/:path*",
     "/auth/:path*",
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder
-     */
+
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$).*)",
   ],
 }
