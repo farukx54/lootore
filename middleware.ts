@@ -93,6 +93,14 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Eğer www.lootore.com'da isek ve /admin veya /admin/login route'una erişiliyorsa api.lootore.com'a yönlendir
+  if (
+    (request.headers.get("host") === "www.lootore.com" || request.headers.get("host") === "lootore.com") &&
+    pathname.startsWith("/admin")
+  ) {
+    return NextResponse.redirect(`https://api.lootore.com${pathname}`)
+  }
+
   // Public routes - no restrictions
   return NextResponse.next()
 }
