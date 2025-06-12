@@ -1,8 +1,7 @@
+import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs"
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs"
-import { cookies } from "next/headers"
-import type { Database } from "@/lib/supabase/types"
+import { SUPABASE_CONFIG } from "./lib/supabase/config"
 
 // Route configurations
 const publicRoutes = ["/", "/nasil-kazanilir", "/yayinlar", "/oduller"]
@@ -12,124 +11,49 @@ const adminRoutes = ["/admin"]
 const adminAuthRoutes = ["/admin/login"]
 
 export async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req: request, res })
 
-  // Cookie ayarlarını düzenle
-  const response = NextResponse.next()
-  const sbAuthToken = request.cookies.get('sb-auth-token')?.value;
-  if (!sbAuthToken) {
-    console.warn('[MIDDLEWARE] sb-auth-token çerezi bulunamadı. Kullanıcı oturumu yok veya çerez silinmiş.');
-  }
+  try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
 
-  response.cookies.set({
-    name: 'sb-auth-token',
-    value: sbAuthToken || '',
-    path: '/',
-    domain: '.lootore.com',
-    sameSite: 'lax',
-    secure: true
-  })
+    const pathname = request.nextUrl.pathname
 
-  // Admin routes protection - STRICT MODE
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    console.log("[MIDDLEWARE] Admin route detected:", pathname)
-
-    try {
-      // Supabase auth ile admin rolü kontrolü
-      const supabase = createServerComponentClient<Database>({ cookies })
-      const { data: { session }, error } = await supabase.auth.getSession()
-
-      if (error) {
-        console.error("[MIDDLEWARE] Error getting session:", error.message)
+    // Admin routes protection
+    if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
+      if (!session) {
         return NextResponse.redirect(new URL("/admin/login", request.url))
       }
 
-      console.log("[MIDDLEWARE] Session:", session)
-      if (session?.user) {
-        console.log("[MIDDLEWARE] User:", session.user)
-      }
-
-      if (!session?.user) {
-        console.log("[MIDDLEWARE] No session found, redirecting to login")
-        return NextResponse.redirect(new URL("/admin/login", request.url))
-      }
-
-      // user_metadata içinde admin rolü var mı?
-      const isAdmin = session.user.user_metadata?.role === "admin"
-
+      // Check if user is admin
+      const isAdmin = session.user.user_metadata.role === "admin"
       if (!isAdmin) {
-        console.log("[MIDDLEWARE] User is not admin, redirecting to login")
         return NextResponse.redirect(new URL("/admin/login", request.url))
       }
-
-      return response
-    } catch (error) {
-      console.error("[MIDDLEWARE] Unexpected error:", error)
-      return NextResponse.redirect(new URL("/admin/login", request.url))
     }
-  }
 
-  // Admin login page - sadece erişime izin ver, yönlendirme yapma
-  if (pathname.startsWith("/admin/login")) {
-    return response
-  }
-
-  // Protected routes - check auth
-  if (pathname.startsWith("/protected")) {
-    try {
-      const supabase = createServerComponentClient<Database>({ cookies })
-      const { data: { session }, error } = await supabase.auth.getSession()
-
-      if (error) {
-        console.error("[MIDDLEWARE] Error getting session:", error.message)
-        return NextResponse.redirect(new URL("/auth/login", request.url))
-      }
-
-      if (!session?.user) {
-        console.log("[MIDDLEWARE] No session found for protected route")
-        return NextResponse.redirect(new URL("/auth/login", request.url))
-      }
-
-      return response
-    } catch (error) {
-      console.error("[MIDDLEWARE] Unexpected error:", error)
-      return NextResponse.redirect(new URL("/auth/login", request.url))
+    // Redirect admin users away from login page
+    if (pathname.startsWith("/admin/login") && session?.user.user_metadata.role === "admin") {
+      return NextResponse.redirect(new URL("/admin", request.url))
     }
+
+    // Set cookie options based on environment
+    const cookieOptions = SUPABASE_CONFIG.cookieOptions
+    res.cookies.set('sb-auth-token', session?.access_token || '', {
+      ...cookieOptions,
+      httpOnly: true,
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+    })
+
+    return res
+  } catch (error) {
+    console.error("Middleware error:", error)
+    return NextResponse.redirect(new URL("/admin/login", request.url))
   }
-
-  // Auth pages - redirect to home if already logged in
-  if (pathname.startsWith("/auth")) {
-    try {
-      const supabase = createServerComponentClient<Database>({ cookies })
-      const { data: { session }, error } = await supabase.auth.getSession()
-
-      if (error) {
-        console.error("[MIDDLEWARE] Error getting session:", error.message)
-        return response
-      }
-
-      if (session?.user) {
-        console.log("[MIDDLEWARE] User already logged in, redirecting to home")
-        return NextResponse.redirect(new URL("/", request.url))
-      }
-
-      return response
-    } catch (error) {
-      console.error("[MIDDLEWARE] Unexpected error:", error)
-      return response
-    }
-  }
-
-  // Public routes - no restrictions
-  return response
 }
 
 export const config = {
-  matcher: [
-    "/admin/:path*",
-    "/protected/:path*",
-    "/auth/:path*",
-
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.gif$|.*\\.svg$).*)",
-  ],
+  matcher: ["/admin/:path*"],
 }

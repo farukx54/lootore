@@ -2,22 +2,43 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import type { Database } from "./types"
 import type { AuthError } from "@supabase/supabase-js"
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { SUPABASE_CONFIG } from "./config"
 
 // Client-side Supabase client (browser)
 export const createClient = () => {
-  return createClientComponentClient<Database>()
+  return createClientComponentClient<Database>({
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      storageKey: 'sb-auth-token',
+      storage: {
+        getItem: (key: string) => {
+          return document.cookie
+            .split('; ')
+            .find((row) => row.startsWith(`${key}=`))
+            ?.split('=')[1]
+        },
+        setItem: (key: string, value: string) => {
+          const cookieOptions = SUPABASE_CONFIG.cookieOptions
+          document.cookie = `${key}=${value}; path=${cookieOptions.path}; SameSite=${cookieOptions.sameSite}${cookieOptions.domain ? `; domain=${cookieOptions.domain}` : ''}${cookieOptions.secure ? '; Secure' : ''}`
+        },
+        removeItem: (key: string) => {
+          const cookieOptions = SUPABASE_CONFIG.cookieOptions
+          document.cookie = `${key}=; path=${cookieOptions.path}; expires=Thu, 01 Jan 1970 00:00:00 GMT${cookieOptions.domain ? `; domain=${cookieOptions.domain}` : ''}${cookieOptions.secure ? '; Secure' : ''}`
+        },
+      },
+    },
+  })
 }
 
 // Server-side Supabase client (API routes, Server Components)
 export const createServerClient = () => {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-  if (!supabaseUrl || !supabaseServiceKey) {
+  if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.serviceKey) {
     throw new Error("Missing Supabase environment variables")
   }
 
-  return createSupabaseClient<Database>(supabaseUrl, supabaseServiceKey, {
+  return createSupabaseClient<Database>(SUPABASE_CONFIG.url, SUPABASE_CONFIG.serviceKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
