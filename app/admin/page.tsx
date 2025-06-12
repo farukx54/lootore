@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import PublisherManager from "@/components/admin/publisher-manager"
 import CouponManager from "@/components/admin/coupon-manager"
@@ -9,15 +9,30 @@ import { Users, Gift, Settings, BarChart3, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAdminStore } from "@/lib/stores/admin-store"
 import { useRouter } from "next/navigation"
+import LoadingScreen from "@/components/loading-screen"
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("publishers")
   const adminLogout = useAdminStore((state) => state.adminLogout)
+  const isAdminLoggedIn = useAdminStore((state) => state.isAdminLoggedIn)
+  const isLoading = useAdminStore((state) => state.isLoading)
+  const sessionChecked = useAdminStore((state) => state.sessionChecked)
+  const checkAdminSession = useAdminStore((state) => state.checkAdminSession)
   const router = useRouter()
 
-  const handleLogout = async () => {
-    await adminLogout()
-    router.push("/admin/login")
+  useEffect(() => {
+    checkAdminSession()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (sessionChecked && !isAdminLoggedIn && !isLoading) {
+      router.replace("/admin/login")
+    }
+  }, [sessionChecked, isAdminLoggedIn, isLoading, router])
+
+  if (!sessionChecked || isLoading) {
+    return <LoadingScreen />
   }
 
   return (
@@ -28,7 +43,10 @@ export default function AdminDashboard() {
           variant="outline"
           size="sm"
           className="flex items-center gap-2"
-          onClick={handleLogout}
+          onClick={async () => {
+            await adminLogout()
+            router.push("/admin/login")
+          }}
         >
           <LogOut className="h-4 w-4" />
           Çıkış Yap
