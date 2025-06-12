@@ -87,6 +87,9 @@ export const useAdminStore = create<AdminState>()(
             return
           }
 
+          // Başarılı girişten sonra session'ı tekrar kontrol et
+          await useAdminStore.getState().checkAdminSession()
+
           set({
             isAdminLoggedIn: true,
             adminUser: data.user,

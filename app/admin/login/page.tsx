@@ -12,6 +12,7 @@ import { Eye, EyeOff, Shield } from "lucide-react"
 import { useAdminStore } from "@/lib/stores/admin-store"
 import { AdminLoginSchema } from "@/lib/types/admin"
 import { z } from "zod"
+import LoadingScreen from "@/components/loading-screen"
 
 export default function AdminLoginPage() {
   const [formData, setFormData] = useState({
@@ -31,11 +32,10 @@ export default function AdminLoginPage() {
   const clearAdminError = useAdminStore((state) => state.clearAdminError)
 
   useEffect(() => {
-    // Eğer kullanıcı zaten admin olarak giriş yapmışsa ve yükleme durumu yoksa /admin sayfasına yönlendir
     if (isAdminLoggedIn && !isLoading) {
-      window.location.href = "/admin"; // Tam sayfa yenileme ile yönlendirme
+      router.push("/admin");
     }
-  }, [isAdminLoggedIn, isLoading])
+  }, [isAdminLoggedIn, isLoading, router])
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -90,7 +90,10 @@ export default function AdminLoginPage() {
     })
   }
 
-  // Eğer zaten giriş yapılmışsa ve yönlendirme bekleniyorsa, başarılı mesaj göster
+  // Eğer zaten giriş yapılmışsa ve yönlendirme bekleniyorsa, başarılı mesaj veya loading göster
+  if (isAdminLoggedIn && isLoading) {
+    return <LoadingScreen />
+  }
   if (isAdminLoggedIn && !isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-900 p-4">

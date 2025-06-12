@@ -23,38 +23,23 @@ export async function middleware(request: NextRequest) {
     const { data: { session }, error } = await supabase.auth.getSession()
 
     if (error || !session?.user) {
-      console.log("No session or error, redirecting to admin login")
-      return NextResponse.redirect(new URL("/admin/login", request.url))
+      console.log("No session or error, returning 401 Unauthorized")
+      return new NextResponse("Unauthorized", { status: 401 })
     }
 
     // user_metadata içinde admin rolü var mı?
     const isAdmin = session.user.user_metadata?.role === "admin"
 
     if (!isAdmin) {
-      console.log("User is not admin, redirecting to admin login")
-      return NextResponse.redirect(new URL("/admin/login", request.url))
+      console.log("User is not admin, returning 401 Unauthorized")
+      return new NextResponse("Unauthorized", { status: 401 })
     }
 
     return NextResponse.next()
   }
 
-  // Admin login page - redirect to admin if already logged in
+  // Admin login page - sadece erişime izin ver, yönlendirme yapma
   if (pathname.startsWith("/admin/login")) {
-    // Supabase auth ile admin rolü kontrolü
-    const supabase = createServerComponentClient<Database>({ cookies })
-    const { data: { session }, error } = await supabase.auth.getSession()
-
-    if (error || !session?.user) {
-      return NextResponse.next()
-    }
-
-    // user_metadata içinde admin rolü var mı?
-    const isAdmin = session.user.user_metadata?.role === "admin"
-
-    if (isAdmin) {
-      return NextResponse.redirect(new URL("/admin", request.url))
-    }
-
     return NextResponse.next()
   }
 
