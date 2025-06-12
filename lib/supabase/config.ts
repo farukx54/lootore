@@ -12,4 +12,4 @@ export const SUPABASE_CONFIG = {
 
 if (!SUPABASE_CONFIG.url || !SUPABASE_CONFIG.anonKey) {
   throw new Error("Missing Supabase environment variables")
-} 
+}
