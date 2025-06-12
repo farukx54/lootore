@@ -1,9 +1,11 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useAuthStore } from "@/lib/stores/auth-store"
-import { supabase } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/auth-helpers"
 import { supabaseService } from "@/lib/services/supabase-service"
+
+const supabase = createClient()
 
 export function useSessionManagement() {
   const { user, login, logout, setLoading } = useAuthStore()

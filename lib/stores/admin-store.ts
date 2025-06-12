@@ -1,8 +1,10 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import { supabase } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/auth-helpers"
 import type { User } from "@supabase/supabase-js"
 import type { AdminPublisher, AdminCoupon } from "@/lib/types/admin"
+
+const supabase = createClient()
 
 interface AdminState {
   isAdminLoggedIn: boolean
