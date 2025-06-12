@@ -22,6 +22,11 @@ export async function middleware(request: NextRequest) {
     const supabase = createServerComponentClient<Database>({ cookies })
     const { data: { session }, error } = await supabase.auth.getSession()
 
+    console.log("[MIDDLEWARE] Session:", session)
+    if (session?.user) {
+      console.log("[MIDDLEWARE] User:", session.user)
+    }
+
     if (error || !session?.user) {
       console.log("No session or error, returning 401 Unauthorized")
       return new NextResponse("Unauthorized", { status: 401 })
