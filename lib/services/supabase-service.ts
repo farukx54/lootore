@@ -1,6 +1,8 @@
-import { supabase } from "../supabase/client"
+import { createClient } from "../supabase/auth-helpers"
 import type { Database } from "../supabase/types"
 import { AuthException, AuthErrorCode } from "../types/auth"
+
+const supabase = createClient()
 
 type Tables = Database["public"]["Tables"]
 type User = Tables["users"]["Row"]
